@@ -1,9 +1,9 @@
 #pragma once
 
-#include <ClickEncoder.h>
 #include "stepper.h"
+#include <ClickEncoder.h>
 
-ClickEncoder *encoder;
+ClickEncoder* encoder;
 int16_t encoder_last, encoder_val;
 
 boolean encoder_up = false;
