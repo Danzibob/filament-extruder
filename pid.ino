@@ -18,7 +18,7 @@ void Brain()
     //  preenableState = enableState;
 
     // PID
-    pid_input = width_curr;
+    pid_input = sensor::width;
     //  myPID.SetSampleTime (1000);
     double gap = abs(pid_setpoint - pid_input); // distance away from setpoint
 

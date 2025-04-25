@@ -1,7 +1,6 @@
 #include <TimerOne.h> // trigger timer to read encoder
 
-#include <EEPROM.h>
-
+#include "eeprom.h"
 #include "display.h"
 #include "encoder.h"
 #include "fans.h"
@@ -31,16 +30,8 @@ void setup()
     Timer1.initialize(1000);
     Timer1.attachInterrupt(timerIsr);
     // last = -1;
-    // Sensor
-    pinMode(PIN_SENSOR_IN, INPUT);
-    // calibrate during the first second
-    while (millis() < 1000) {
-        sensor_inp_raw = analogRead(PIN_SENSOR_IN);
-        // record the minimum sensor value
-        if (sensor_inp_raw > sensor_inp_min) {
-            sensor_inp_min = sensor_inp_raw;
-        }
-    }
+    sensor::init();
+    eeprom::load();
     // Stepper 1 - Puller
     pinMode(PIN_PULLER_STEP, OUTPUT);
     pinMode(PIN_PULLER_DIR, OUTPUT);
@@ -54,17 +45,11 @@ void setup()
     pinMode(PIN_STEPPER_ENABLE, OUTPUT);
     // ResetDistr
     resetDistr();
-    // EEPROM
-    pid_setpoint_int = ((EEPROM.read(width_eeprom_diam) * 256) + EEPROM.read(width_eeprom_diam + 1));
-    if (pid_setpoint_int < 1) {
-        pid_setpoint_int = 175;
-        EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-        EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
-    }
-    width_offset = EEPROM.read(width_eeprom_offset);
     // LCD clear
     lcd.clear();
 }
+
+
 void loop()
 {
 
@@ -121,7 +106,7 @@ void loop()
     Var();
     fans::set();
 
-    if (width_curr - width_offset_float <= 0.10 && menu_curr_item != 1) {
+    if (sensor::width - sensor::offset_float <= 0.10 && menu_curr_item != 1) {
         // myPID.SetMode(MANUAL);
         stepper_enabled = 0;
         stepper_preenable = stepper_enabled;
@@ -160,11 +145,11 @@ void Var()
         travel_speed = 160;
     }
 
-    width_offset_float = width_offset * 0.01;
-    if (width_offset <= -25) {
-        width_offset = -25;
-    } else if (width_offset >= 25) {
-        width_offset = 25;
+    sensor::offset_float = sensor::offset * 0.01;
+    if (sensor::offset <= -25) {
+        sensor::offset = -25;
+    } else if (sensor::offset >= 25) {
+        sensor::offset = 25;
     }
 
     distrib_new_position_end = (7900 / 4) - distrib_new_position;

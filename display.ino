@@ -14,7 +14,7 @@ void drawHome()
             // save the last time you blinked the LED
             lcd_prevMillis = currentMillis;
             lcd.setCursor(1, 0);
-            lcd.print abs(width_curr);
+            lcd.print(abs(sensor::width));
             lcd.setCursor(9, 0);
             if (pid_mode != 3) {
                 lcd.print(extrude_speed, 2);
@@ -146,7 +146,7 @@ void drawMenu()
             lcd.print(extrude_speed2, 2);
         } else if (menu_curr_item == 5) {
             drawHome();
-            displayMenuItem(str_offset, 1, true, width_offset_float);
+            displayMenuItem(str_offset, 1, true, sensor::offset_float);
         } else if (menu_curr_item == 6) {
             drawHome();
             lcd.setCursor(0, 1);
@@ -190,7 +190,7 @@ void drawMenu()
         } else if (menu_curr_item == 4) {
 
             drawHome();
-            displayMenuItem(str_offset, 1, true, width_offset_float);
+            displayMenuItem(str_offset, 1, true, sensor::offset_float);
         } else if (menu_curr_item == 5) {
             drawHome();
             lcd.setCursor(0, 1);
@@ -260,14 +260,11 @@ void drawMenu()
             if (encoder_up) {
                 encoder_up = false;
                 pid_setpoint_int--;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             } else if (encoder_down) {
                 encoder_down = false;
                 pid_setpoint_int++;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             }
+            eeprom::update();
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (menu_page == 4 && menu_curr_item == 1) {
@@ -406,14 +403,11 @@ void drawMenu()
             if (encoder_up) {
                 encoder_up = false;
                 pid_setpoint_int--;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             } else if (encoder_down) {
                 encoder_down = false;
                 pid_setpoint_int++;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             }
+            eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
             displayString2MenuPage(mode[pid_mode]);
@@ -462,7 +456,7 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 5) {
             drawHome();
-            if (width_offset_float >= 0) {
+            if (sensor::offset_float >= 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
@@ -470,24 +464,23 @@ void drawMenu()
                 lcd.setCursor(11, 1);
                 lcd.print("  ");
                 lcd.setCursor(12, 1);
-                lcd.print(width_offset_float, 2);
-            } else if (width_offset_float < 0) {
+                lcd.print(sensor::offset_float, 2);
+            } else if (sensor::offset_float < 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
                 lcd.print("Offset");
                 lcd.setCursor(11, 1);
-                lcd.print(width_offset_float, 2);
+                lcd.print(sensor::offset_float, 2);
             }
             if (encoder_up) {
                 encoder_up = false;
-                width_offset--;
-                EEPROM.update(width_eeprom_offset, width_offset);
+                sensor::offset--;
             } else if (encoder_down) {
                 encoder_down = false;
-                width_offset++;
-                EEPROM.update(width_eeprom_offset, width_offset);
+                sensor::offset++;
             }
+            eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 6) {
             drawHome();
             lcd.setCursor(0, 1);
@@ -576,14 +569,11 @@ void drawMenu()
             if (encoder_up) {
                 encoder_up = false;
                 pid_setpoint_int--;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             } else if (encoder_down) {
                 encoder_down = false;
                 pid_setpoint_int++;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             }
+            eeprom::update();
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (menu_page == 4 && menu_curr_item == 1) {
@@ -713,14 +703,11 @@ void drawMenu()
             if (encoder_up) {
                 encoder_up = false;
                 pid_setpoint_int--;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             } else if (encoder_down) {
                 encoder_down = false;
                 pid_setpoint_int++;
-                EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
-                EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
             }
+            eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
             displayString2MenuPage(mode[pid_mode]);
@@ -740,7 +727,7 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 4) {
             drawHome();
-            if (width_offset_float >= 0) {
+            if (sensor::offset_float >= 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
@@ -748,25 +735,24 @@ void drawMenu()
                 lcd.setCursor(11, 1);
                 lcd.print("  ");
                 lcd.setCursor(12, 1);
-                lcd.print(width_offset_float, 2);
-            } else if (width_offset_float < 0) {
+                lcd.print(sensor::offset_float, 2);
+            } else if (sensor::offset_float < 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
                 lcd.print("Offset");
                 lcd.setCursor(11, 1);
-                lcd.print(width_offset_float, 2);
+                lcd.print(sensor::offset_float, 2);
             }
 
             if (encoder_up) {
                 encoder_up = false;
-                width_offset--;
-                EEPROM.update(width_eeprom_offset, width_offset);
+                sensor::offset--;
             } else if (encoder_down) {
                 encoder_down = false;
-                width_offset++;
-                EEPROM.update(width_eeprom_offset, width_offset);
+                sensor::offset++;
             }
+            eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 5) {
             drawHome();
             lcd.setCursor(0, 1);
@@ -825,7 +811,7 @@ void drawMenu()
     }
 
     if (menu_curr_item > 1) {
-        Sensor();
+        sensor::update();
     }
 }
 
@@ -956,14 +942,14 @@ void displayMenuItem(String item, int position, boolean selected, int value)
     }
 
     if (menu_curr_item == 4) {
-        if (width_offset_float >= 0) {
+        if (sensor::offset_float >= 0) {
             lcd.setCursor(11, position);
             lcd.print("+");
             lcd.setCursor(12, position);
-            lcd.print(width_offset_float, 2);
-        } else if (width_offset_float < 0) {
+            lcd.print(sensor::offset_float, 2);
+        } else if (sensor::offset_float < 0) {
             lcd.setCursor(11, position);
-            lcd.print(width_offset_float, 2);
+            lcd.print(sensor::offset_float, 2);
         }
     }
 }
