@@ -200,11 +200,11 @@ float             Distrinterval = 0;
 //Stepper 2 - Distribution - Direction Time
 unsigned long     DirDistrtime;
 unsigned long     DirDistrpreviousMillis = 0;
-float             DirDistrinterval = 50000;
+float             DirDistrinterval = 50000/4; // Moves 4x correct amount
 // Stepper 2 - Distribution - Radious counter
 float             rad = 0;
 // Stepper 2 reset
-int               numStepMotore = 7800;
+int               numStepMotore = 7800 / 4;
 int               steppini = 0;
 
 int               mm = 0 ;
@@ -729,9 +729,9 @@ void drawMenu() {
       } else if (down) {
         down = false;
         digitalWrite(DistrpinDir, HIGH);
-        if (StepperPosition < 7900) {
+        if (StepperPosition < 7900/4) {
           StepperPosition = StepperPosition + StepsToTake;
-        } else StepperPosition = 7900;
+        } else StepperPosition = 7900/4;
         if ( StepperPosition != lastStepperPosition) {
 
           for (int x = 0; x < StepsToTake; x++) {
@@ -1078,9 +1078,9 @@ void drawMenu() {
       } else if (down) {
         down = false;
         digitalWrite(DistrpinDir, HIGH);
-        if (StepperPosition < 7900) {
+        if (StepperPosition < 7900/4) {
           StepperPosition = StepperPosition + StepsToTake;
-        } else StepperPosition = 7900;
+        } else StepperPosition = 7900/4;
         if ( StepperPosition != lastStepperPosition) {
 
           for (int x = 0; x < StepsToTake; x++) {
@@ -1531,7 +1531,7 @@ void Var() {
     offset = 25;
   }
 
-  newpositionEnd = 7900 - newposition;
+  newpositionEnd = (7900/4) - newposition;
   extspd = 60 / ((Pullinterval * 400) / 1000) * 0.062;
   extspd2 = extspd  * 1000;
   DistributionSteps = 2 * travel ;
