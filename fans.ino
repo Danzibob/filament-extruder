@@ -1,11 +1,11 @@
 #include "./fans.h"
 
 void fans() {
-  if (fanspd <= 0) {
-    fanspd = 0;
+  if (fan_speed <= 0) {
+    fan_speed = 0;
   }
-  if (fanspd >= 255) {
-    fanspd = 255;
+  if (fan_speed >= 255) {
+    fan_speed = 255;
   }
-  analogWrite ( pwmPin, fanspd);
+  analogWrite ( PIN_FAN_PWM, fan_speed);
 }

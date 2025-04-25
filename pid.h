@@ -2,20 +2,20 @@
 
 #include <PID_v1.h>
 
-double Setpoint, Input, Output;
+double pid_setpoint, pid_input, pid_output;
 //Define the aggressive and conservative Tuning Parameters
-double SoftKp = 6.9 ,   SoftKi = 0.23,   SoftKd = 5.175;
-double MediumKp = 10.8 , MediumKi = 0.45, MediumKd = 6.48;
-double HardKp = 15.48,      HardKi = 0.62,   HardKd = 9.675 ;
-double Hard2Kp = 0.1548,      Hard2Ki = 0.0062,   Hard2Kd = 0.9675 ;
+double kp_soft = 6.9 ,   ki_soft = 0.23,   kd_soft = 5.175;
+double kp_medium = 10.8 , ki_medium = 0.45, kd_medium = 6.48;
+double kp_hard = 15.48,      ki_hard = 0.62,   kd_hard = 9.675 ;
+double kp_hard2 = 0.1548,      ki_hard2 = 0.0062,   kd_hard2 = 0.9675 ;
 
-int selectedMode = 0;
+int pid_mode = 0;
 
-int diameter = 175;
-float intdiameter = 0;
-float lastOutput = 0;
+int pid_setpoint_int = 175;
+float pid_setpoint_float = 0;
+float pid_last_output = 0;
 
 
-PID myPID(&Input, &Output, &Setpoint, SoftKp, SoftKi, SoftKd, DIRECT);
+PID pid(&pid_input, &pid_output, &pid_setpoint, kp_soft, ki_soft, kd_soft, DIRECT);
 
 void Brain();

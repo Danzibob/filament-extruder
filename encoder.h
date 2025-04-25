@@ -4,11 +4,11 @@
 #include "stepper.h"
 
 ClickEncoder *encoder;
-int16_t last, value;
+int16_t encoder_last, encoder_val;
 
-boolean up = false;
-boolean down = false;
-boolean middle = false;
+boolean encoder_up = false;
+boolean encoder_down = false;
+boolean encoder_middle = false;
 
 void timerIsr();
 void readRotaryEncoder();

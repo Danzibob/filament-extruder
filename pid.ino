@@ -2,11 +2,11 @@
 
 void Brain () {
   //initialize the variables we're linked to
-  Setpoint = diameter * 0.01;
+  pid_setpoint = pid_setpoint_int * 0.01;
   //turn the PID on
 
   //Strarting speed pot
-  stsp = pullspd;
+  puller_start_speed = pull_speed;
 
   //  if (pullspd == 0 && selectedMode == 3) {
   //
@@ -18,53 +18,53 @@ void Brain () {
 
 
   //PID
-  Input = measure ;
+  pid_input = width_curr ;
   //  myPID.SetSampleTime (1000);
-  double gap = abs(Setpoint - Input); //distance away from setpoint
+  double gap = abs(pid_setpoint - pid_input); //distance away from setpoint
 
-  if (selectedMode == 0 && menuItem != 1) {
-    myPID.SetOutputLimits(6, 120);
-    if ( Setpoint >= 2.4) {
-      myPID.SetOutputLimits(12, 100);
+  if (pid_mode == 0 && menu_curr_item != 1) {
+    pid.SetOutputLimits(6, 120);
+    if ( pid_setpoint >= 2.4) {
+      pid.SetOutputLimits(12, 100);
     }
-    myPID.SetTunings(SoftKp, SoftKi, SoftKd);
-    myPID.SetMode(AUTOMATIC);
-    myPID.Compute();
-    Pullinterval = Output;
+    pid.SetTunings(kp_soft, ki_soft, kd_soft);
+    pid.SetMode(AUTOMATIC);
+    pid.Compute();
+    puller_interval = pid_output;
     Pull();
     Distr();
     Spool();
-  } else if (selectedMode == 1 && menuItem != 1) {
-    myPID.SetOutputLimits(6, 120);
-    if ( Setpoint >= 2.4) {
-      myPID.SetOutputLimits(12, 100);
+  } else if (pid_mode == 1 && menu_curr_item != 1) {
+    pid.SetOutputLimits(6, 120);
+    if ( pid_setpoint >= 2.4) {
+      pid.SetOutputLimits(12, 100);
     }
-    myPID.SetTunings(MediumKp, MediumKi, MediumKd);
-    myPID.Compute();
-    myPID.SetMode(AUTOMATIC);
-    Pullinterval = Output;
+    pid.SetTunings(kp_medium, ki_medium, kd_medium);
+    pid.Compute();
+    pid.SetMode(AUTOMATIC);
+    puller_interval = pid_output;
     Pull();
     Distr();
     Spool();
-  } else if (selectedMode == 2 && menuItem != 1 ) {
-    myPID.SetOutputLimits(6, 120);
-    if ( Setpoint >= 2.4) {
-      myPID.SetOutputLimits(12, 100);
+  } else if (pid_mode == 2 && menu_curr_item != 1 ) {
+    pid.SetOutputLimits(6, 120);
+    if ( pid_setpoint >= 2.4) {
+      pid.SetOutputLimits(12, 100);
     }
-    myPID.SetTunings(HardKp, HardKi, HardKd);
+    pid.SetTunings(kp_hard, ki_hard, kd_hard);
     if ( gap < 0.06) {
-      myPID.SetTunings(Hard2Kp, Hard2Ki, Hard2Kd);
+      pid.SetTunings(kp_hard2, ki_hard2, kd_hard2);
     }
 
-    myPID.Compute();
-    myPID.SetMode(AUTOMATIC);
-    lastOutput = Output;
-    Pullinterval = Output;
+    pid.Compute();
+    pid.SetMode(AUTOMATIC);
+    pid_last_output = pid_output;
+    puller_interval = pid_output;
     Pull();
     Distr();
     Spool();
-  } else if (selectedMode == 3 && menuItem != 1) {
-    myPID.SetMode(MANUAL);
+  } else if (pid_mode == 3 && menu_curr_item != 1) {
+    pid.SetMode(MANUAL);
     //    Pullinterval = extspd;
     ManualPull();
     Distr();

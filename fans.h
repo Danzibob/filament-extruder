@@ -1,7 +1,6 @@
 #pragma once
 
-int fanspd = 255;
-int pwmPin = 11;
-int y = 0;
+int fan_speed = 255;
+const int PIN_FAN_PWM = 11;
 
 void fans();

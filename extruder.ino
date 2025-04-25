@@ -18,49 +18,49 @@ void setup() {
   lcd.print("Felfil Spooler");
   lcd.setCursor(0, 1);
   lcd.print("Calibrating 1.4c");
-  lcd.createChar(1, SpdLogo);
-  lcd.createChar(0, DiameterLogo);
-  lcd.createChar(2, mmLogo);
-  lcd.createChar(3, MetrLogo1);
-  lcd.createChar(4, MetrLogo2);
-  lcd.createChar(5, ExLogo);
-  lcd.createChar(6, XtLogo);
+  lcd.createChar(1, logo_speed);
+  lcd.createChar(0, logo_diameter);
+  lcd.createChar(2, logo_mm);
+  lcd.createChar(3, logo_metr1);
+  lcd.createChar(4, logo_metr2);
+  lcd.createChar(5, logo_ex);
+  lcd.createChar(6, logo_xt);
   //Encoder
   encoder = new ClickEncoder(A2, A1, A3);
   Timer1.initialize(1000);
   Timer1.attachInterrupt(timerIsr);
   //last = -1;
   //Sensor
-  pinMode( sensIn, INPUT);
+  pinMode( PIN_SENSOR_IN, INPUT);
   // calibrate during the first second
   while (millis() < 1000) {
-    sensorValue = analogRead(sensIn);
+    sensor_inp_raw = analogRead(PIN_SENSOR_IN);
     // record the minimum sensor value
-    if (sensorValue > sensorMin) {
-      sensorMin = sensorValue;
+    if (sensor_inp_raw > sensor_inp_min) {
+      sensor_inp_min = sensor_inp_raw;
     }
   }
   //Stepper 1 - Puller
-  pinMode(PullpinStep, OUTPUT);
-  pinMode(PullpinDir, OUTPUT);
+  pinMode(PIN_PULLER_STEP, OUTPUT);
+  pinMode(PIN_PULLER_DIR, OUTPUT);
   //Stepper 2 - Distribution
-  pinMode(DistrpinStep, OUTPUT);
-  pinMode(DistrpinDir, OUTPUT);
+  pinMode(PIN_DISTRIB_STEP, OUTPUT);
+  pinMode(PIN_DISTRIB_DIR, OUTPUT);
   //Stepper 3 - Spool
-  pinMode(SpoolpinStep, OUTPUT);
-  pinMode(SpoolpinDir, OUTPUT);
+  pinMode(PIN_SPOOL_STEP, OUTPUT);
+  pinMode(PIN_SPOOL_DIR, OUTPUT);
   //Stepper enable
-  pinMode ( enablePin, OUTPUT);
+  pinMode ( PIN_STEPPER_ENABLE, OUTPUT);
   //ResetDistr
   resetDistr ();
   // EEPROM
-  diameter = ((EEPROM.read(adressDiam) * 256) + EEPROM.read(adressDiam + 1));
-  if (diameter < 1 ) {
-    diameter = 175;
-    EEPROM.update(adressDiam, highByte(diameter));
-    EEPROM.update(adressDiam + 1, lowByte(diameter));
+  pid_setpoint_int = ((EEPROM.read(width_eeprom_diam) * 256) + EEPROM.read(width_eeprom_diam + 1));
+  if (pid_setpoint_int < 1 ) {
+    pid_setpoint_int = 175;
+    EEPROM.update(width_eeprom_diam, highByte(pid_setpoint_int));
+    EEPROM.update(width_eeprom_diam + 1, lowByte(pid_setpoint_int));
   }
-  offset = EEPROM.read(adressOffset);
+  width_offset = EEPROM.read(width_eeprom_offset);
   //LCD clear
   lcd.clear();
   // Fan
@@ -71,9 +71,9 @@ void loop() {
   //Pullinterval = 90;
   // LCD //
   unsigned long currentMillis = millis();
-  if (currentMillis - LcdpreviousMillis2 >= Lcdinterval2) {
+  if (currentMillis - lcd_prevMillis >= lcd_interval) {
     // save the last time you blinked the LED
-    LcdpreviousMillis2 = currentMillis;
+    lcd_prevMillis = currentMillis;
     drawMenu();
   }
   // ENCODER //
@@ -82,7 +82,7 @@ void loop() {
   if (b != ClickEncoder::Open) {
     switch (b) {
       case ClickEncoder::Clicked:
-        middle = true;
+        encoder_middle = true;
         lcd.clear();
         break;
     }
@@ -94,9 +94,9 @@ void loop() {
         lcd.setCursor( 0, 0);
         lcd.print("Resetting...");
         resetDistr ();
-        StepperPosition = 0;
-        menuItem = 1;
-        page = 2;
+        distrib_stepper_pos = 0;
+        menu_curr_item = 1;
+        menu_page = 2;
         lcd.clear();
         break;
 
@@ -106,13 +106,13 @@ void loop() {
   if (b != ClickEncoder::Open) {
     switch (b) {
       case ClickEncoder::DoubleClicked:
-        if (selectedMode < 3) {
-          if (page == 2 && menuItem == 8) {
-            R = 0;
+        if (pid_mode < 3) {
+          if (menu_page == 2 && menu_curr_item == 8) {
+            puller_num_revs = 0;
           }
-        } else if (selectedMode == 3) {
-          if (page == 2 && menuItem == 9) {
-            R = 0;
+        } else if (pid_mode == 3) {
+          if (menu_page == 2 && menu_curr_item == 9) {
+            puller_num_revs = 0;
           }
         }
         break;
@@ -125,62 +125,56 @@ void loop() {
   // Fans
   fans();
 
-  if (measure - intOffset <= 0.10 && menuItem != 1 )
+  if (width_curr - width_offset_float <= 0.10 && menu_curr_item != 1 )
   {
     //myPID.SetMode(MANUAL);
-    enableState = 0;
-    preenableState = enableState;
+    stepper_enabled = 0;
+    stepper_preenable = stepper_enabled;
   }
   else
-  { enableState = 1;
-    preenableState = enableState;
+  { stepper_enabled = 1;
+    stepper_preenable = stepper_enabled;
     Brain();
   }  //    myPID.SetMode(AUTOMATIC);
 
-  if (enableState == 0) {
-    digitalWrite (enablePin, HIGH);
+  if (stepper_enabled == 0) {
+    digitalWrite (PIN_STEPPER_ENABLE, HIGH);
   }
-  else digitalWrite (enablePin, LOW);
+  else digitalWrite (PIN_STEPPER_ENABLE, LOW);
 
 }
 // MAIN //
 
 // VARIABILIES //
 void Var() {
-  if ( extspd < 0) {
-    extspd = 0;
+
+  pid_setpoint_float = pid_setpoint_int * 0.01;
+  if (spool_speed <= 2) {
+    spool_speed = 2;
+  } else if (spool_speed >= 30) {
+    spool_speed = 30;
+  }
+  spool_interval = spool_speed;
+  spool_rpm = 300 / spool_speed;
+
+  distrib_interval = 160 / travel_speed;
+
+  if (travel_speed <= 0 ) {
+    travel_speed = 0;
+  }
+  if (travel_speed >= 160 ) {
+    travel_speed = 160;
   }
 
-
-  intdiameter = diameter * 0.01;
-  if (spoolspd <= 2) {
-    spoolspd = 2;
-  } else if (spoolspd >= 30) {
-    spoolspd = 30;
-  }
-  Spoolinterval = spoolspd;
-  spoolRPM = 300 / spoolspd;
-
-  Distrinterval = 160 / travelspd;
-
-  if (travelspd <= 0 ) {
-    travelspd = 0;
-  }
-  if (travelspd >= 160 ) {
-    travelspd = 160;
+  width_offset_float = width_offset * 0.01;
+  if ( width_offset <= -25) {
+    width_offset = -25;
+  } else if ( width_offset >= 25) {
+    width_offset = 25;
   }
 
-  intOffset = offset * 0.01;
-  if ( offset <= -25) {
-    offset = -25;
-  } else if ( offset >= 25) {
-    offset = 25;
-  }
-
-  newpositionEnd = (7900/4) - newposition;
-  extspd = 60 / ((Pullinterval * 400) / 1000) * 0.062;
-  extspd2 = extspd  * 1000;
-  DistributionSteps = 2 * travel ;
-  Total = R * 0.194;
+  distrib_new_position_end = (7900/4) - distrib_new_position;
+  distrib_steps = 2 * travel_step ;
+  puller_total = puller_num_revs * 0.194;
 }
 // VARIABILIES //

@@ -1,14 +1,14 @@
 #include "./sensor.h"
 
 void Sensor() {
-  sensorValue = analogRead(sensIn);
-  sensbuf += (sensorValue - sensbuf) - sensorMin; //smoothing
-  measure = abs (lookup(sensbuf, lut3)) + intOffset;
+  sensor_inp_raw = analogRead(PIN_SENSOR_IN);
+  sensor_inp += (sensor_inp_raw - sensor_inp) - sensor_inp_min; //smoothing
+  width_curr = abs (lookup(sensor_inp, lut3)) + width_offset_float;
 }
 float lookup(float inval, float lut[][2]) {
   float out;
   byte i;
-  for (i = 1; i < NUMTEMPS; i++)
+  for (i = 1; i < lut_len; i++)
   {
     if (lut[i][0] > inval)
     {

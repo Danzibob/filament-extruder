@@ -4,104 +4,85 @@
 void Pull() {
   unsigned long currentMillis = millis();
   //Stepper 1 - Puller
-  digitalWrite(PullpinDir, HIGH);
-  if (currentMillis - PullpreviousMillis >= Pullinterval) {
+  digitalWrite(PIN_PULLER_DIR, HIGH);
+  if (currentMillis - puller_previous_millis >= puller_interval) {
     // save the last time you blinked the LED
-    PullpreviousMillis = currentMillis;
+    puller_previous_millis = currentMillis;
     // if the LED is off turn it on and vice-versa:
-    if (PullpinStepState == LOW)
-      PullpinStepState = HIGH , r++;
+    if (puller_step == LOW)
+      puller_step = HIGH , puller_step_in_rev++;
     else
-      PullpinStepState = LOW;
+      puller_step = LOW;
     // set the LED with the ledState of the variable:
-    digitalWrite(PullpinStep, PullpinStepState);
+    digitalWrite(PIN_PULLER_STEP, puller_step);
   }
-  if (r == 400) {
-    r = 0;
-    R++;
+  if (puller_step_in_rev == 400) {
+    puller_step_in_rev = 0;
+    puller_num_revs++;
   }
 
 }
+
 void ManualPull(){
-
-  unsigned long currentMillis = micros();
-  //Stepper 1 - Puller
-  digitalWrite(PullpinDir, HIGH);
-  if (currentMillis - PullpreviousMillis >= Pullinterval) {
-    // save the last time you blinked the LED
-    PullpreviousMillis = currentMillis;
-    // if the LED is off turn it on and vice-versa:
-    if (PullpinStepState == LOW)
-      PullpinStepState = HIGH , r++;
-    else
-      PullpinStepState = LOW;
-    // set the LED with the ledState of the variable:
-    digitalWrite(PullpinStep, PullpinStepState);
-  }
-  if (r == 400) {
-    r = 0;
-    R++;
-  }
-
+  Pull(); // this is the same lol
 }
+
 // Spooler
 void Spool() {
   unsigned long currentMillis = millis();
   //Stepper 3 - Spool
-  digitalWrite(SpoolpinDir, LOW);
-  if (currentMillis - SpoolpreviousMillis >= Spoolinterval) {
+  digitalWrite(PIN_SPOOL_DIR, LOW);
+  if (currentMillis - spool_previous_millis >= spool_interval) {
     // save the last time you blinked the LED
-    SpoolpreviousMillis = currentMillis;
+    spool_previous_millis = currentMillis;
     // if the LED is off turn it on and vice-versa:
-    if (SpoolpinStepState == LOW)
-      SpoolpinStepState = HIGH;
+    if (spool_step == LOW)
+      spool_step = HIGH;
     else
-      SpoolpinStepState = LOW;
+      spool_step = LOW;
     // set the LED with the ledState of the variable:
-    digitalWrite(SpoolpinStep, SpoolpinStepState);
+    digitalWrite(PIN_SPOOL_STEP, spool_step);
   }
 }
+
 //Distribution
 void Distr() {
   unsigned long currentMillis = millis();
   //Stepper 2 - Distribution
-  if (currentMillis - DistrpreviousMillis >= Distrinterval) {
+  if (currentMillis - distrib_previous_millis >= distrib_interval) {
     // save the last time you blinked the LED
-    DistrpreviousMillis = currentMillis;
+    distrib_previous_millis = currentMillis;
     // if the LED is off turn it on and vice-versa:
-    if (DistrpinStepState == LOW) {
-      DistrpinStepState = HIGH;
-      y++;
-    }  else
-      DistrpinStepState = LOW;
+    if (distrib_step == LOW)
+      distrib_step = HIGH, distrib_step_since_dir_change++;
+    else
+      distrib_step = LOW;
     // set the LED with the ledState of the variable:
-    digitalWrite(DistrpinStep, DistrpinStepState);
-  }
-  //Stepper 2 - Distribution Direction
-  if ( y >= 0 && y <= DistributionSteps / 2) {
-    DistrpinDirState = LOW;
-  } else if (  y >= DistributionSteps / 2 && y <= DistributionSteps - 1) {
-    DistrpinDirState = HIGH;
-  }
-  if (y >= DistributionSteps ) {
-    y = 0;
+    digitalWrite(PIN_DISTRIB_STEP, distrib_step);
   }
 
-  digitalWrite(DistrpinDir, DistrpinDirState);
+  //Stepper 2 - Distribution Direction
+  if ( distrib_step_since_dir_change >= 0 && distrib_step_since_dir_change <= distrib_steps / 2) {
+    distrib_dir = LOW;
+  } else if (  distrib_step_since_dir_change >= distrib_steps / 2 && distrib_step_since_dir_change <= distrib_steps - 1) {
+    distrib_dir = HIGH;
+  }
+  if (distrib_step_since_dir_change >= distrib_steps ) {
+    distrib_step_since_dir_change = 0;
+  }
+
+  digitalWrite(PIN_DISTRIB_DIR, distrib_dir);
 }
 void resetDistr () {
-  //definiamo la direzione del motore
+  digitalWrite(PIN_DISTRIB_DIR, LOW);
 
-  digitalWrite(DistrpinDir, LOW);
-
-  //esegue un giro completo in un senso
-  for (int x = 0; x < numStepMotore; x++) {
-    digitalWrite (enablePin, LOW);
-    digitalWrite(DistrpinStep, HIGH);
+  for (int x = 0; x < distrib_num_steps; x++) {
+    digitalWrite (PIN_STEPPER_ENABLE, LOW);
+    digitalWrite(PIN_DISTRIB_STEP, HIGH);
     delay(1);
-    digitalWrite(DistrpinStep, LOW);
+    digitalWrite(PIN_DISTRIB_STEP, LOW);
     delay(1);
   }
-  digitalWrite(DistrpinDir, HIGH);
+  digitalWrite(PIN_DISTRIB_DIR, HIGH);
 
 }

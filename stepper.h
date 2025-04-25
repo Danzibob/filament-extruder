@@ -1,78 +1,81 @@
 #pragma once
 
 //Enable
-const int enablePin = 8;
-int enableState = 1;
-int preenableState = 0;
+const int PIN_STEPPER_ENABLE = 8;
+int stepper_enabled = 1;
+int stepper_preenable = 0;
 
-float travel = 0;
-float travelspd = 4;
-float pullspd = 12;
-int spoolspd = 12;
+float travel_step = 0;
 
-float spoolRPM = 0 ;
-int kilograms = 0;
-float extspd = 0;
-float extspd2 = 0;
+float travel_speed = 4;
+float pull_speed = 12;
+int spool_speed = 12;
 
-int newpositionEnd = 0;
-int newposition = 0;
-int TravelBegin = 0;
-int TravelEnd = 0;
+float spool_rpm = 0 ;
+
+float extrude_speed = 0;
+float extrude_speed2 = 0;
+
+int distrib_new_position = 0;
+int distrib_new_position_end = 0;
+
+int travel_begin = 0;
+int travel_end = 0;
 
 //Stepper 1 - Puller - Pin Definition
-const int         PullpinDir = 2;
-const int         PullpinStep = 5;
-int               PullpinStepState = HIGH;
+const int         PIN_PULLER_DIR = 2;
+const int         PIN_PULLER_STEP = 5;
+
+int               puller_step = HIGH;
 //Stepper 1 - Puller - Time
-unsigned long     Pulltime;
-unsigned long     PullpreviousMillis = 0;
-float             Pullinterval = 0 ;
+unsigned long     puller_time;
+unsigned long     puller_previous_millis = 0;
+float             puller_interval = 0 ;
 //Stepper 1 - round counter
-int               r = 0;
-int               R = 0;
-float             Total = 0;
+int               puller_step_in_rev = 0;
+int               puller_num_revs = 0;
+float             puller_total = 0;
 // start speed
-float             stsp = 0;
-float             stspMin ;
-float             stspMax ;
+float             puller_start_speed = 0;
+float             puller_start_speed_min ;
+float             puller_start_speed_max ;
 
 //Stepper 2 - Distribution - Pin Definitio
-const int         DistrpinDir = 3;
-const int         DistrpinStep = 6;
-int               DistrpinStepState = HIGH;
-int               DistrpinDirState = LOW;
-int               DistributionSteps = 0;
+const int         PIN_DISTRIB_DIR = 3;
+const int         PIN_DISTRIB_STEP = 6;
+int               distrib_step = HIGH;
+int               distrib_dir = LOW;
+int               distrib_steps = 0;
 //Stepper 2 - Distribution - Speed Time
-unsigned long     Distrtime;
-unsigned long     DistrpreviousMillis = 0;
-float             Distrinterval = 0;
+unsigned long     distrib_time;
+unsigned long     distrib_previous_millis = 0;
+float             distrib_interval = 0;
 //Stepper 2 - Distribution - Direction Time
-unsigned long     DirDistrtime;
-unsigned long     DirDistrpreviousMillis = 0;
-float             DirDistrinterval = 50000/4; // Moves 4x correct amount
+unsigned long     distrib_dir_time;
+unsigned long     distrib_dir_previous_millis = 0;
+float             distrib_dir_interval = 50000/4; // Moves 4x correct amount
 // Stepper 2 - Distribution - Radious counter
-float             rad = 0;
+float             distrib_radius = 0;
 // Stepper 2 reset
-int               numStepMotore = 7800 / 4;
-int               steppini = 0;
+int               distrib_num_steps = 7800 / 4;
+
+int distrib_step_since_dir_change = 0;
 
 int               mm = 0 ;
-int               StepperPosition = 0;  // To store Stepper Motor Position
-int               lastStepperPosition = 0;  // To store Stepper Motor Position
+int               distrib_stepper_pos = 0;  // To store Stepper Motor Position
+int               distrib_last_stepper_pos = 0;  // To store Stepper Motor Position
 
-int               StepsToTake = 100;    // Controls the speed of the Stepper per Rotary click
+int               steps_per_click = 100;    // Controls the speed of the Stepper per Rotary click
 
 
-//const int numStepMotore = 200;
 //Stepper 3 - Spool - Pin Definition
-const int         SpoolpinDir = 4;
-const int         SpoolpinStep = 7;
-int               SpoolpinStepState = HIGH;
+const int         PIN_SPOOL_DIR = 4;
+const int         PIN_SPOOL_STEP = 7;
+int               spool_step = HIGH;
 //Stepper 3 - Spool - Time
-unsigned long     Spooltime;
-unsigned long     SpoolpreviousMillis = 0;
-float             Spoolinterval = 0;
+unsigned long     spool_time;
+unsigned long     spool_previous_millis = 0;
+float             spool_interval = 0;
 
 void Pull();
 void ManualPull();

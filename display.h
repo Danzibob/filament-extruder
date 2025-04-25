@@ -12,33 +12,31 @@
 // LCD
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
-unsigned long     LcdpreviousMillis = 0;
-int               Lcdinterval = 1000;
-unsigned long     LcdpreviousMillis2 = 0;
-int               Lcdinterval2 = 100;
+unsigned long     lcd_prevMillis = 0;
+int               lcd_interval = 100;
 
 
 // Menu state
-int menuItem = 1;
-int frame = 1;
-int page = 1;
-int lastMenuItem = 1;
+int menu_curr_item = 1;
+int menu_frame = 1;
+int menu_page = 1;
+int menu_last_item = 1;
 
 // Menu strings
-String menuItem1 = "   Set up:";
-String menuItem2 = " Diameter:";
-String menuItem3 = "     Mode: ";
-String menuItem4 = "  PullSpd: ";
-String menuItem5 = "   Offset:";
-String menuItem6 = "  TravSpd: ";
-String menuItem7 = " SpoolSpd:";
-String menuItem8 = "   FanSpd:";
-String menuItem9 = "    Stats:";
+String str_set_up = "   Set up:";
+String str_diam = " Diameter:";
+String str_mode = "     Mode: ";
+String str_pull_speed = "  PullSpd: ";
+String str_offset = "   Offset:";
+String str_trav_speed = "  TravSpd: ";
+String str_spool_speed = " SpoolSpd:";
+String str_fan_speed = "   FanSpd:";
+String str_stats = "    Stats:";
 
 String mode[4] = { "Soft", "Medium", "Hard", "Manual" };
 
 // Constants for logo, etc
-byte DiameterLogo[] = {
+byte logo_diameter[] = {
   0x1F,
   0x1F,
   0x13,
@@ -49,7 +47,7 @@ byte DiameterLogo[] = {
   0x1F
 };
 
-byte SpdLogo[] = {
+byte logo_speed[] = {
   0x1F,
   0x1F,
   0x11,
@@ -59,7 +57,7 @@ byte SpdLogo[] = {
   0x11,
   0x1F
 };
-byte mmLogo[] = {
+byte logo_mm[] = {
   0x00,
   0x00,
   0x00,
@@ -70,7 +68,7 @@ byte mmLogo[] = {
   0x15
 };
 
-byte MetrLogo1[] = {
+byte logo_metr1[] = {
   0x11,
   0x1B,
   0x15,
@@ -80,7 +78,7 @@ byte MetrLogo1[] = {
   0x04,
   0x08
 };
-byte MetrLogo2[] = {
+byte logo_metr2[] = {
   0x02,
   0x04,
   0x08,
@@ -90,7 +88,7 @@ byte MetrLogo2[] = {
   0x15,
   0x15
 };
-byte ExLogo[] = {
+byte logo_ex[] = {
   0x1F,
   0x1F,
   0x11,
@@ -100,7 +98,7 @@ byte ExLogo[] = {
   0x11,
   0x1F
 };
-byte XtLogo[] = {
+byte logo_xt[] = {
   0x1F,
   0x1F,
   0x10,
