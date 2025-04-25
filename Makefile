@@ -8,4 +8,4 @@ setup:
 	find libraries -type f -exec arduino-cli lib install --zip-path {} \;
 
 build:
-	arduino-cli compile --fqbn arduino:avr:nano extruder
+	arduino-cli compile --fqbn arduino:avr:nano .
