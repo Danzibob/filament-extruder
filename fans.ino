@@ -1,12 +1,16 @@
 #include "./fans.h"
 
-void fans()
+namespace fans {
+
+void set()
 {
-    if (fan_speed <= 0) {
-        fan_speed = 0;
+    if (speed <= 0) {
+        speed = 0;
     }
-    if (fan_speed >= 255) {
-        fan_speed = 255;
+    if (speed >= 255) {
+        speed = 255;
     }
-    analogWrite(PIN_FAN_PWM, fan_speed);
+    analogWrite(PIN_FAN_PWM, speed);
+}
+
 }

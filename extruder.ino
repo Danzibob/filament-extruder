@@ -64,7 +64,6 @@ void setup()
     width_offset = EEPROM.read(width_eeprom_offset);
     // LCD clear
     lcd.clear();
-    // Fan
 }
 void loop()
 {
@@ -120,8 +119,7 @@ void loop()
     }
 
     Var();
-    // Fans
-    fans();
+    fans::set();
 
     if (width_curr - width_offset_float <= 0.10 && menu_curr_item != 1) {
         // myPID.SetMode(MANUAL);

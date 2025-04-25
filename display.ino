@@ -175,7 +175,7 @@ void drawMenu()
             displayMenuItem(str_spool_speed, 1, true, spool_rpm);
         } else if (menu_curr_item == 8) {
             drawHome();
-            displayMenuItem(str_fan_speed, 1, true, fan_speed);
+            displayMenuItem(str_fan_speed, 1, true, fans::speed);
         } else if (menu_curr_item == 9) {
             drawHome();
             displayMenuItem(str_stats, 1, true, puller_total);
@@ -219,7 +219,7 @@ void drawMenu()
             displayMenuItem(str_spool_speed, 1, true, spool_rpm);
         } else if (menu_curr_item == 7) {
             drawHome();
-            displayMenuItem(str_fan_speed, 1, true, fan_speed);
+            displayMenuItem(str_fan_speed, 1, true, fans::speed);
         } else if (menu_curr_item == 8) {
             drawHome();
             displayMenuItem(str_stats, 1, true, puller_total);
@@ -530,13 +530,13 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 8) {
             drawHome();
-            displayIntMenuPage(str_fan_speed, 1, fan_speed);
+            displayIntMenuPage(str_fan_speed, 1, fans::speed);
             if (encoder_up) {
                 encoder_up = false;
-                fan_speed--;
+                fans::speed--;
             } else if (encoder_down) {
                 encoder_down = false;
-                fan_speed++;
+                fans::speed++;
             }
         } else if (menu_page == 2 && menu_curr_item == 9) {
             drawHome();
@@ -806,13 +806,13 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();
-            displayIntMenuPage(str_fan_speed, 1, fan_speed);
+            displayIntMenuPage(str_fan_speed, 1, fans::speed);
             if (encoder_up) {
                 encoder_up = false;
-                fan_speed--;
+                fans::speed--;
             } else if (encoder_down) {
                 encoder_down = false;
-                fan_speed++;
+                fans::speed++;
             }
         } else if (menu_page == 2 && menu_curr_item == 8) {
             drawHome();
