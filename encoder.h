@@ -2,13 +2,16 @@
 
 #include "stepper.h"
 #include <ClickEncoder.h>
+#include <TimerOne.h> // trigger timer to read encoder
 
-ClickEncoder* encoder;
-int16_t encoder_last, encoder_val;
+namespace encoder {
 
-boolean encoder_up = false;
-boolean encoder_down = false;
-boolean encoder_middle = false;
+int16_t last, val;
 
-void timerIsr();
-void readRotaryEncoder();
+ClickEncoder::Button btn;
+boolean up, down, middle = false;
+
+void init();
+void read();
+
+}

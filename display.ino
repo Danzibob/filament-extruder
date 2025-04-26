@@ -45,20 +45,20 @@ void drawMenu()
 {
     // MENU UI Start
     if (menu_curr_item == 2 && menu_page == 1) {
-        encoder_up = false;
+        encoder::up = false;
     }
-    if (encoder_up && menu_page == 1) {
+    if (encoder::up && menu_page == 1) {
 
-        encoder_up = false;
+        encoder::up = false;
         menu_last_item = menu_curr_item;
         menu_curr_item--;
         if (menu_curr_item == 0) {
             menu_curr_item = 1;
         }
     }
-    if (encoder_down && menu_page == 1) // We have turned the Rotary Encoder Clockwise
+    if (encoder::down && menu_page == 1) // We have turned the Rotary Encoder Clockwise
     {
-        encoder_down = false;
+        encoder::down = false;
         menu_last_item = menu_curr_item;
         menu_curr_item++;
         if (menu_curr_item == 10 && pid_mode == 3) {
@@ -72,9 +72,9 @@ void drawMenu()
     if (menu_page == 1 && menu_curr_item == 1) {
         menu_page = 2;
     }
-    if (encoder_middle && menu_curr_item == 1) // Middle Button is Pressed - SETUP MENU
+    if (encoder::middle && menu_curr_item == 1) // Middle Button is Pressed - SETUP MENU
     {
-        encoder_middle = false;
+        encoder::middle = false;
 
         if (menu_page == 1) {
 
@@ -117,9 +117,9 @@ void drawMenu()
     // SETUP MENU
     // End_______________________________________________________________________
 
-    if (encoder_middle && menu_curr_item >= 2) // Middle Button is Pressed - USING MENU
+    if (encoder::middle && menu_curr_item >= 2) // Middle Button is Pressed - USING MENU
     {
-        encoder_middle = false;
+        encoder::middle = false;
         if (menu_page == 1) {
             menu_page = 2;
         } else if (menu_page == 2) {
@@ -234,15 +234,15 @@ void drawMenu()
         if (menu_page == 2 && menu_curr_item == 1) {
             // digitalWrite (enablePin, HIGH);
             displayStringMenuPage(mode[pid_mode]);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_mode--;
 
                 if (pid_mode <= 0) {
                     pid_mode = 0;
                 }
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_mode++;
 
                 if (pid_mode >= 3) {
@@ -257,11 +257,11 @@ void drawMenu()
             lcd.setCursor(0, 1);
             lcd.print(pid_setpoint_float, 2);
 
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_setpoint_int--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_setpoint_int++;
             }
             eeprom::update();
@@ -279,8 +279,8 @@ void drawMenu()
                 lcd.setCursor(0, 1);
                 lcd.print(mm);
             }
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 digitalWrite(PIN_DISTRIB_DIR, LOW);
                 if (distrib_stepper_pos > 0) {
                     distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
@@ -297,8 +297,8 @@ void drawMenu()
                     }
                 }
                 distrib_new_position = distrib_stepper_pos;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 digitalWrite(PIN_DISTRIB_DIR, HIGH);
                 if (distrib_stepper_pos < 7900 / 4) {
                     distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
@@ -332,8 +332,8 @@ void drawMenu()
                 lcd.print(mm);
             }
 
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 digitalWrite(PIN_DISTRIB_DIR, LOW);
                 if (distrib_stepper_pos > 0) {
                     distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
@@ -350,8 +350,8 @@ void drawMenu()
                         // steppini--;
                     }
                 }
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 digitalWrite(PIN_DISTRIB_DIR, HIGH);
                 if (distrib_stepper_pos < distrib_new_position_end) {
                     distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
@@ -380,14 +380,14 @@ void drawMenu()
                 puller_interval = 9000;
             }
 
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 if (puller_interval < 90000) {
                     puller_interval = puller_interval + 100;
                 } else
                     puller_interval = puller_interval;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 if (puller_interval > 1000) {
                     puller_interval = puller_interval - 100;
                 } else
@@ -400,26 +400,26 @@ void drawMenu()
         if (menu_page == 2 && menu_curr_item == 2) {
             drawHome();
             displayIntMenuPage(str_diam, 1, pid_setpoint_float);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_setpoint_int--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_setpoint_int++;
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
             displayString2MenuPage(mode[pid_mode]);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_mode--;
 
                 if (pid_mode <= 0) {
                     pid_mode = 0;
                 }
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_mode++;
 
                 if (pid_mode >= 3) {
@@ -441,14 +441,14 @@ void drawMenu()
                 puller_interval = 9000;
             }
 
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 if (puller_interval < 90000) {
                     puller_interval = puller_interval + 100;
                 } else
                     puller_interval = puller_interval;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 if (puller_interval > 1000) {
                     puller_interval = puller_interval - 100;
                 } else
@@ -473,11 +473,11 @@ void drawMenu()
                 lcd.setCursor(11, 1);
                 lcd.print(sensor::offset_float, 2);
             }
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 sensor::offset--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 sensor::offset++;
             }
             eeprom::update();
@@ -504,31 +504,31 @@ void drawMenu()
                 lcd.setCursor(12, 1);
                 lcd.print("Auto");
             }
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 travel_speed--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 travel_speed++;
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();
             displayIntMenuPage(str_spool_speed, 1, spool_rpm);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 spool_speed++;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 spool_speed--;
             }
         } else if (menu_page == 2 && menu_curr_item == 8) {
             drawHome();
             displayIntMenuPage(str_fan_speed, 1, fans::speed);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 fans::speed--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 fans::speed++;
             }
         } else if (menu_page == 2 && menu_curr_item == 9) {
@@ -545,15 +545,15 @@ void drawMenu()
         // Begin_____________________________________________________________
         if (menu_page == 2 && menu_curr_item == 1) {
             displayStringMenuPage(mode[pid_mode]);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_mode--;
 
                 if (pid_mode <= 0) {
                     pid_mode = 0;
                 }
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_mode++;
 
                 if (pid_mode >= 3) {
@@ -566,11 +566,11 @@ void drawMenu()
             lcd.print("Set Diameter:");
             lcd.setCursor(0, 1);
             lcd.print(pid_setpoint_float, 2);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_setpoint_int--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_setpoint_int++;
             }
             eeprom::update();
@@ -588,8 +588,8 @@ void drawMenu()
                 lcd.setCursor(0, 1);
                 lcd.print(mm);
             }
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 digitalWrite(PIN_DISTRIB_DIR, LOW);
                 if (distrib_stepper_pos > 0) {
                     distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
@@ -607,8 +607,8 @@ void drawMenu()
                     }
                 }
                 distrib_new_position = distrib_stepper_pos;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 digitalWrite(PIN_DISTRIB_DIR, HIGH);
                 if (distrib_stepper_pos < 7900 / 4) {
                     distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
@@ -642,8 +642,8 @@ void drawMenu()
                 lcd.print(mm);
             }
 
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 digitalWrite(PIN_DISTRIB_DIR, LOW);
                 if (distrib_stepper_pos > 0) {
                     distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
@@ -660,8 +660,8 @@ void drawMenu()
                         // steppini--;
                     }
                 }
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 digitalWrite(PIN_DISTRIB_DIR, HIGH);
                 if (distrib_stepper_pos < distrib_new_position_end) {
                     distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
@@ -700,26 +700,26 @@ void drawMenu()
             lcd.print("  ");
             lcd.setCursor(12, 1);
             lcd.print(pid_setpoint_float, 2);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_setpoint_int--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_setpoint_int++;
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
             displayString2MenuPage(mode[pid_mode]);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 pid_mode--;
 
                 if (pid_mode <= 0) {
                     pid_mode = 0;
                 }
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 pid_mode++;
                 if (pid_mode >= 3) {
                     pid_mode = 3;
@@ -745,11 +745,11 @@ void drawMenu()
                 lcd.print(sensor::offset_float, 2);
             }
 
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 sensor::offset--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 sensor::offset++;
             }
             eeprom::update();
@@ -773,31 +773,31 @@ void drawMenu()
                 lcd.setCursor(13, 1);
                 lcd.print(travel_speed);
             }
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 travel_speed--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 travel_speed++;
             }
         } else if (menu_page == 2 && menu_curr_item == 6) {
             drawHome();
             displayIntMenuPage(str_spool_speed, 1, spool_rpm);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 spool_speed++;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 spool_speed--;
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();
             displayIntMenuPage(str_fan_speed, 1, fans::speed);
-            if (encoder_up) {
-                encoder_up = false;
+            if (encoder::up) {
+                encoder::up = false;
                 fans::speed--;
-            } else if (encoder_down) {
-                encoder_down = false;
+            } else if (encoder::down) {
+                encoder::down = false;
                 fans::speed++;
             }
         } else if (menu_page == 2 && menu_curr_item == 8) {

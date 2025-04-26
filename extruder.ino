@@ -1,5 +1,3 @@
-#include <TimerOne.h> // trigger timer to read encoder
-
 #include "eeprom.h"
 #include "display.h"
 #include "encoder.h"
@@ -25,11 +23,7 @@ void setup()
     lcd.createChar(4, logo_metr2);
     lcd.createChar(5, logo_ex);
     lcd.createChar(6, logo_xt);
-    // Encoder
-    encoder = new ClickEncoder(A2, A1, A3);
-    Timer1.initialize(1000);
-    Timer1.attachInterrupt(timerIsr);
-    // last = -1;
+    encoder::init();
     sensor::init();
     eeprom::load();
     // Stepper 1 - Puller
@@ -61,46 +55,36 @@ void loop()
         lcd_prevMillis = currentMillis;
         drawMenu();
     }
-    // ENCODER //
-    readRotaryEncoder();
-    ClickEncoder::Button b = encoder->getButton();
-    if (b != ClickEncoder::Open) {
-        switch (b) {
-        case ClickEncoder::Clicked:
-            encoder_middle = true;
-            lcd.clear();
-            break;
-        }
-    }
-    if (b != ClickEncoder::Open) {
-        switch (b) {
-        case ClickEncoder::Held:
-            lcd.clear();
-            lcd.setCursor(0, 0);
-            lcd.print("Resetting...");
-            resetDistr();
-            distrib_stepper_pos = 0;
-            menu_curr_item = 1;
-            menu_page = 2;
-            lcd.clear();
-            break;
-        }
-    }
 
-    if (b != ClickEncoder::Open) {
-        switch (b) {
-        case ClickEncoder::DoubleClicked:
-            if (pid_mode < 3) {
-                if (menu_page == 2 && menu_curr_item == 8) {
-                    puller_num_revs = 0;
-                }
-            } else if (pid_mode == 3) {
-                if (menu_page == 2 && menu_curr_item == 9) {
-                    puller_num_revs = 0;
-                }
+    // ENCODER //
+    encoder::read();
+    switch (encoder::btn) {
+    case ClickEncoder::Clicked:
+        lcd.clear();
+        break;
+    case ClickEncoder::Held:
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Resetting...");
+        resetDistr();
+        distrib_stepper_pos = 0;
+        menu_curr_item = 1;
+        menu_page = 2;
+        lcd.clear();
+        break;
+    case ClickEncoder::DoubleClicked:
+        if (pid_mode < 3) {
+            if (menu_page == 2 && menu_curr_item == 8) {
+                puller_num_revs = 0;
             }
-            break;
+        } else if (pid_mode == 3) {
+            if (menu_page == 2 && menu_curr_item == 9) {
+                puller_num_revs = 0;
+            }
         }
+        break;
+    default:
+        break;
     }
 
     Var();
