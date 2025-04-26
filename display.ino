@@ -16,7 +16,7 @@ void drawHome()
             lcd.setCursor(1, 0);
             lcd.print(abs(sensor::width));
             lcd.setCursor(9, 0);
-            if (pid_mode != 3) {
+            if (pid::mode != 3) {
                 lcd.print(extrude_speed, 2);
             } else
                 lcd.print(extrude_speed2, 2);
@@ -61,9 +61,9 @@ void drawMenu()
         encoder::down = false;
         menu_last_item = menu_curr_item;
         menu_curr_item++;
-        if (menu_curr_item == 10 && pid_mode == 3) {
+        if (menu_curr_item == 10 && pid::mode == 3) {
             menu_curr_item--;
-        } else if (menu_curr_item == 9 && pid_mode != 3) {
+        } else if (menu_curr_item == 9 && pid::mode != 3) {
             menu_curr_item--;
         }
     }
@@ -104,7 +104,7 @@ void drawMenu()
         } else if (menu_page == 5) {
             travel_end = distrib_stepper_pos;
             travel_step = travel_end;
-            if (pid_mode <= 2) {
+            if (pid::mode <= 2) {
                 menu_curr_item = 2;
                 menu_page = 1;
             } else
@@ -129,13 +129,13 @@ void drawMenu()
     // MENU UI END
 
     // Menu using structure begin
-    if (menu_page == 1 && menu_curr_item >= 2 && pid_mode == 3) {
+    if (menu_page == 1 && menu_curr_item >= 2 && pid::mode == 3) {
         if (menu_curr_item == 2) {
             drawHome();
-            displayMenuItem(str_diam, 1, true, pid_setpoint_float);
+            displayMenuItem(str_diam, 1, true, pid::setpoint_float);
         } else if (menu_curr_item == 3) {
             drawHome();
-            displayIntStringMenuPage(str_mode, 1, true, mode[pid_mode]);
+            displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode]);
         } else if (menu_curr_item == 4) {
 
             drawHome();
@@ -180,13 +180,13 @@ void drawMenu()
             drawHome();
             displayMenuItem(str_stats, 1, true, puller_total);
         }
-    } else if (menu_page == 1 && menu_curr_item >= 2 && pid_mode != 3) {
+    } else if (menu_page == 1 && menu_curr_item >= 2 && pid::mode != 3) {
         if (menu_curr_item == 2) {
             drawHome();
-            displayMenuItem(str_diam, 1, true, pid_setpoint_float);
+            displayMenuItem(str_diam, 1, true, pid::setpoint_float);
         } else if (menu_curr_item == 3) {
             drawHome();
-            displayIntStringMenuPage(str_mode, 1, true, mode[pid_mode]);
+            displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode]);
         } else if (menu_curr_item == 4) {
 
             drawHome();
@@ -227,26 +227,26 @@ void drawMenu()
     }
     // Menu using structure end
 
-    if (pid_mode == 3) {
+    if (pid::mode == 3) {
 
         // Manual Mode Setting
         // Begin___________________________________________________________
         if (menu_page == 2 && menu_curr_item == 1) {
             // digitalWrite (enablePin, HIGH);
-            displayStringMenuPage(mode[pid_mode]);
+            displayStringMenuPage(mode[pid::mode]);
             if (encoder::up) {
                 encoder::up = false;
-                pid_mode--;
+                pid::mode--;
 
-                if (pid_mode <= 0) {
-                    pid_mode = 0;
+                if (pid::mode <= 0) {
+                    pid::mode = 0;
                 }
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_mode++;
+                pid::mode++;
 
-                if (pid_mode >= 3) {
-                    pid_mode = 3;
+                if (pid::mode >= 3) {
+                    pid::mode = 3;
                 }
             }
         }
@@ -255,14 +255,14 @@ void drawMenu()
             lcd.setCursor(0, 0);
             lcd.print("Set Diameter:");
             lcd.setCursor(0, 1);
-            lcd.print(pid_setpoint_float, 2);
+            lcd.print(pid::setpoint_float, 2);
 
             if (encoder::up) {
                 encoder::up = false;
-                pid_setpoint_int--;
+                pid::setpoint_int--;
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_setpoint_int++;
+                pid::setpoint_int++;
             }
             eeprom::update();
         }
@@ -399,31 +399,31 @@ void drawMenu()
 
         if (menu_page == 2 && menu_curr_item == 2) {
             drawHome();
-            displayIntMenuPage(str_diam, 1, pid_setpoint_float);
+            displayIntMenuPage(str_diam, 1, pid::setpoint_float);
             if (encoder::up) {
                 encoder::up = false;
-                pid_setpoint_int--;
+                pid::setpoint_int--;
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_setpoint_int++;
+                pid::setpoint_int++;
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
-            displayString2MenuPage(mode[pid_mode]);
+            displayString2MenuPage(mode[pid::mode]);
             if (encoder::up) {
                 encoder::up = false;
-                pid_mode--;
+                pid::mode--;
 
-                if (pid_mode <= 0) {
-                    pid_mode = 0;
+                if (pid::mode <= 0) {
+                    pid::mode = 0;
                 }
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_mode++;
+                pid::mode++;
 
-                if (pid_mode >= 3) {
-                    pid_mode = 3;
+                if (pid::mode >= 3) {
+                    pid::mode = 3;
                 }
             }
         } else if (menu_page == 2 && menu_curr_item == 4) {
@@ -540,24 +540,24 @@ void drawMenu()
         }
     }
 
-    else if (pid_mode != 3) {
+    else if (pid::mode != 3) {
         // Preset Mode Setting
         // Begin_____________________________________________________________
         if (menu_page == 2 && menu_curr_item == 1) {
-            displayStringMenuPage(mode[pid_mode]);
+            displayStringMenuPage(mode[pid::mode]);
             if (encoder::up) {
                 encoder::up = false;
-                pid_mode--;
+                pid::mode--;
 
-                if (pid_mode <= 0) {
-                    pid_mode = 0;
+                if (pid::mode <= 0) {
+                    pid::mode = 0;
                 }
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_mode++;
+                pid::mode++;
 
-                if (pid_mode >= 3) {
-                    pid_mode = 3;
+                if (pid::mode >= 3) {
+                    pid::mode = 3;
                 }
             }
         }
@@ -565,13 +565,13 @@ void drawMenu()
             lcd.setCursor(0, 0);
             lcd.print("Set Diameter:");
             lcd.setCursor(0, 1);
-            lcd.print(pid_setpoint_float, 2);
+            lcd.print(pid::setpoint_float, 2);
             if (encoder::up) {
                 encoder::up = false;
-                pid_setpoint_int--;
+                pid::setpoint_int--;
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_setpoint_int++;
+                pid::setpoint_int++;
             }
             eeprom::update();
         }
@@ -699,30 +699,30 @@ void drawMenu()
             lcd.setCursor(11, 1);
             lcd.print("  ");
             lcd.setCursor(12, 1);
-            lcd.print(pid_setpoint_float, 2);
+            lcd.print(pid::setpoint_float, 2);
             if (encoder::up) {
                 encoder::up = false;
-                pid_setpoint_int--;
+                pid::setpoint_int--;
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_setpoint_int++;
+                pid::setpoint_int++;
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
-            displayString2MenuPage(mode[pid_mode]);
+            displayString2MenuPage(mode[pid::mode]);
             if (encoder::up) {
                 encoder::up = false;
-                pid_mode--;
+                pid::mode--;
 
-                if (pid_mode <= 0) {
-                    pid_mode = 0;
+                if (pid::mode <= 0) {
+                    pid::mode = 0;
                 }
             } else if (encoder::down) {
                 encoder::down = false;
-                pid_mode++;
-                if (pid_mode >= 3) {
-                    pid_mode = 3;
+                pid::mode++;
+                if (pid::mode >= 3) {
+                    pid::mode = 3;
                 }
             }
         } else if (menu_page == 2 && menu_curr_item == 4) {
@@ -850,19 +850,19 @@ void displayStringMenuPage(String value)
     lcd.print("Set Mode:");
     lcd.setCursor(0, 1);
     lcd.print(">");
-    if (pid_mode == 0) {
+    if (pid::mode == 0) {
         lcd.setCursor(1, 1);
         lcd.print("    ");
         lcd.setCursor(5, 1);
-    } else if (pid_mode == 1) {
+    } else if (pid::mode == 1) {
         lcd.setCursor(1, 1);
         lcd.print(" ");
         lcd.setCursor(3, 1);
-    } else if (pid_mode == 2) {
+    } else if (pid::mode == 2) {
         lcd.setCursor(1, 1);
         lcd.print("    ");
         lcd.setCursor(5, 1);
-    } else if (pid_mode == 3) {
+    } else if (pid::mode == 3) {
         lcd.setCursor(1, 1);
         lcd.print(" ");
         lcd.setCursor(3, 1);
@@ -877,19 +877,19 @@ void displayString2MenuPage(String value)
     lcd.setCursor(3, 1);
     lcd.print(" Mode");
 
-    if (pid_mode == 0) {
+    if (pid::mode == 0) {
         lcd.setCursor(8, 1);
         lcd.print("    ");
         lcd.setCursor(12, 1);
-    } else if (pid_mode == 1) {
+    } else if (pid::mode == 1) {
         lcd.setCursor(8, 1);
         lcd.print(" ");
         lcd.setCursor(10, 1);
-    } else if (pid_mode == 2) {
+    } else if (pid::mode == 2) {
         lcd.setCursor(8, 1);
         lcd.print("    ");
         lcd.setCursor(12, 1);
-    } else if (pid_mode == 3) {
+    } else if (pid::mode == 3) {
         lcd.setCursor(8, 1);
         lcd.print(" ");
         lcd.setCursor(10, 1);
@@ -938,7 +938,7 @@ void displayMenuItem(String item, int position, boolean selected, int value)
         lcd.setCursor(11, position);
         lcd.print("  ");
         lcd.setCursor(12, position);
-        lcd.print(pid_setpoint_float, 2);
+        lcd.print(pid::setpoint_float, 2);
     }
 
     if (menu_curr_item == 4) {

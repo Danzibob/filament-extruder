@@ -73,11 +73,11 @@ void loop()
         lcd.clear();
         break;
     case ClickEncoder::DoubleClicked:
-        if (pid_mode < 3) {
+        if (pid::mode < 3) {
             if (menu_page == 2 && menu_curr_item == 8) {
                 puller_num_revs = 0;
             }
-        } else if (pid_mode == 3) {
+        } else if (pid::mode == 3) {
             if (menu_page == 2 && menu_curr_item == 9) {
                 puller_num_revs = 0;
             }
@@ -97,7 +97,7 @@ void loop()
     } else {
         stepper_enabled = 1;
         stepper_preenable = stepper_enabled;
-        Brain();
+        pid::Brain();
     } //    myPID.SetMode(AUTOMATIC);
 
     if (stepper_enabled == 0) {
@@ -111,7 +111,7 @@ void loop()
 void Var()
 {
 
-    pid_setpoint_float = pid_setpoint_int * 0.01;
+    pid::setpoint_float = pid::setpoint_int * 0.01;
     if (spool_speed <= 2) {
         spool_speed = 2;
     } else if (spool_speed >= 30) {
