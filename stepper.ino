@@ -1,86 +1,77 @@
 #include "./stepper.h"
 
-// Puller
-void Pull()
-{
-    unsigned long currentMillis = millis();
-    // Stepper 1 - Puller
-    digitalWrite(PIN_PULLER_DIR, HIGH);
-    if (currentMillis - puller_previous_millis >= puller_interval) {
-        // save the last time you blinked the LED
-        puller_previous_millis = currentMillis;
-        // if the LED is off turn it on and vice-versa:
-        if (puller_step == LOW)
-            puller_step = HIGH, puller_step_in_rev++;
-        else
-            puller_step = LOW;
+namespace {
+void stepperTick(const int pin, int *step, unsigned long *previous_millis, int interval, int *step_in_rev=nullptr) {
+    unsigned long current_millis = millis();
+    if (current_millis - *previous_millis >= interval) {
+        *previous_millis = current_millis;
+
+        if (*step == LOW) {
+            *step = HIGH;
+            if (step_in_rev)
+                (*step_in_rev)++;
+        } else
+            *step = LOW;
         // set the LED with the ledState of the variable:
-        digitalWrite(PIN_PULLER_STEP, puller_step);
-    }
-    if (puller_step_in_rev == 400) {
-        puller_step_in_rev = 0;
-        puller_num_revs++;
+        digitalWrite(pin, *step);
     }
 }
 
-void ManualPull()
+}
+
+namespace stepper {
+
+// Puller
+namespace pull {
+
+void tick()
 {
-    Pull(); // this is the same lol
+    digitalWrite(PIN_PULLER_DIR, HIGH);
+    stepperTick(PIN_PULLER_STEP, &step, &previous_millis, interval, &step_in_rev);
+    if (step_in_rev == 400) {
+        step_in_rev = 0;
+        num_revs++;
+    }
 }
 
-// Spooler
-void Spool()
+}
+
+
+namespace spool {
+
+void tick()
 {
     unsigned long currentMillis = millis();
     // Stepper 3 - Spool
     digitalWrite(PIN_SPOOL_DIR, LOW);
-    if (currentMillis - spool_previous_millis >= spool_interval) {
-        // save the last time you blinked the LED
-        spool_previous_millis = currentMillis;
-        // if the LED is off turn it on and vice-versa:
-        if (spool_step == LOW)
-            spool_step = HIGH;
-        else
-            spool_step = LOW;
-        // set the LED with the ledState of the variable:
-        digitalWrite(PIN_SPOOL_STEP, spool_step);
-    }
+    stepperTick(PIN_SPOOL_STEP, &step, &previous_millis, interval);
 }
 
-// Distribution
-void Distr()
-{
-    unsigned long currentMillis = millis();
-    // Stepper 2 - Distribution
-    if (currentMillis - distrib_previous_millis >= distrib_interval) {
-        // save the last time you blinked the LED
-        distrib_previous_millis = currentMillis;
-        // if the LED is off turn it on and vice-versa:
-        if (distrib_step == LOW)
-            distrib_step = HIGH, distrib_step_since_dir_change++;
-        else
-            distrib_step = LOW;
-        // set the LED with the ledState of the variable:
-        digitalWrite(PIN_DISTRIB_STEP, distrib_step);
-    }
+}
+
+namespace distrib {
+void tick() {
+    stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, interval, &step_since_dir_change);
 
     // Stepper 2 - Distribution Direction
-    if (distrib_step_since_dir_change >= 0 && distrib_step_since_dir_change <= distrib_steps / 2) {
-        distrib_dir = LOW;
-    } else if (distrib_step_since_dir_change >= distrib_steps / 2 && distrib_step_since_dir_change <= distrib_steps - 1) {
-        distrib_dir = HIGH;
-    }
-    if (distrib_step_since_dir_change >= distrib_steps) {
-        distrib_step_since_dir_change = 0;
+    if (step_since_dir_change >= 0 && step_since_dir_change <= steps / 2) {
+        dir = LOW;
+    } else if (step_since_dir_change >= steps / 2 && step_since_dir_change <= steps - 1) {
+        dir = HIGH;
     }
 
-    digitalWrite(PIN_DISTRIB_DIR, distrib_dir);
+    if (step_since_dir_change >= steps) {
+        step_since_dir_change = 0;
+    }
+
+    digitalWrite(PIN_DISTRIB_DIR, dir);
+
 }
-void resetDistr()
+
+void reset()
 {
     digitalWrite(PIN_DISTRIB_DIR, LOW);
-
-    for (int x = 0; x < distrib_num_steps; x++) {
+    for (int x = 0; x < num_steps; x++) {
         digitalWrite(PIN_STEPPER_ENABLE, LOW);
         digitalWrite(PIN_DISTRIB_STEP, HIGH);
         delay(1);
@@ -88,4 +79,49 @@ void resetDistr()
         delay(1);
     }
     digitalWrite(PIN_DISTRIB_DIR, HIGH);
+}
+
+}
+
+void init()
+{
+    // Stepper 1 - Puller
+    pinMode(PIN_PULLER_STEP, OUTPUT);
+    pinMode(PIN_PULLER_DIR, OUTPUT);
+    // Stepper 2 - Distribution
+    pinMode(PIN_DISTRIB_STEP, OUTPUT);
+    pinMode(PIN_DISTRIB_DIR, OUTPUT);
+    // Stepper 3 - Spool
+    pinMode(PIN_SPOOL_STEP, OUTPUT);
+    pinMode(PIN_SPOOL_DIR, OUTPUT);
+    // Stepper enable
+    pinMode(PIN_STEPPER_ENABLE, OUTPUT);
+
+    // ResetDistr
+    distrib::reset();
+}
+
+void Var() {
+    if (spool::speed <= 2) {
+        spool::speed = 2;
+    } else if (spool::speed >= 30) {
+        spool::speed = 30;
+    }
+    spool::interval = spool::speed;
+    spool::rpm = 300 / spool::speed;
+    distrib::interval = 160 / distrib::travel_speed;
+
+    if (distrib::travel_speed <= 0) {
+        distrib::travel_speed = 0;
+    }
+    if (distrib::travel_speed >= 160) {
+        distrib::travel_speed = 160;
+    }
+
+    distrib::new_position_end = (7900 / 4) - distrib::new_position;
+    distrib::steps = 2 * distrib::travel_step;
+    pull::total = pull::num_revs * 0.194;
+
+}
+
 }

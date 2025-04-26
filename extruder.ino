@@ -23,22 +23,10 @@ void setup()
     lcd.createChar(4, logo_metr2);
     lcd.createChar(5, logo_ex);
     lcd.createChar(6, logo_xt);
-    encoder::init();
-    sensor::init();
     eeprom::load();
-    // Stepper 1 - Puller
-    pinMode(PIN_PULLER_STEP, OUTPUT);
-    pinMode(PIN_PULLER_DIR, OUTPUT);
-    // Stepper 2 - Distribution
-    pinMode(PIN_DISTRIB_STEP, OUTPUT);
-    pinMode(PIN_DISTRIB_DIR, OUTPUT);
-    // Stepper 3 - Spool
-    pinMode(PIN_SPOOL_STEP, OUTPUT);
-    pinMode(PIN_SPOOL_DIR, OUTPUT);
-    // Stepper enable
-    pinMode(PIN_STEPPER_ENABLE, OUTPUT);
-    // ResetDistr
-    resetDistr();
+    sensor::init();
+    stepper::init();
+    encoder::init();
     // LCD clear
     lcd.clear();
 }
@@ -66,8 +54,8 @@ void loop()
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("Resetting...");
-        resetDistr();
-        distrib_stepper_pos = 0;
+        stepper::distrib::reset();
+        stepper::distrib::pos = 0;
         menu_curr_item = 1;
         menu_page = 2;
         lcd.clear();
@@ -75,11 +63,11 @@ void loop()
     case ClickEncoder::DoubleClicked:
         if (pid::mode < 3) {
             if (menu_page == 2 && menu_curr_item == 8) {
-                puller_num_revs = 0;
+                stepper::pull::num_revs = 0;
             }
         } else if (pid::mode == 3) {
             if (menu_page == 2 && menu_curr_item == 9) {
-                puller_num_revs = 0;
+                stepper::pull::num_revs = 0;
             }
         }
         break;
@@ -92,42 +80,25 @@ void loop()
 
     if (sensor::width - sensor::offset_float <= 0.10 && menu_curr_item != 1) {
         // myPID.SetMode(MANUAL);
-        stepper_enabled = 0;
-        stepper_preenable = stepper_enabled;
+        stepper::enabled = 0;
     } else {
-        stepper_enabled = 1;
-        stepper_preenable = stepper_enabled;
+        stepper::enabled = 1;
         pid::Brain();
     } //    myPID.SetMode(AUTOMATIC);
 
-    if (stepper_enabled == 0) {
-        digitalWrite(PIN_STEPPER_ENABLE, HIGH);
+    if (stepper::enabled == 0) {
+        digitalWrite(stepper::PIN_STEPPER_ENABLE, HIGH);
     } else
-        digitalWrite(PIN_STEPPER_ENABLE, LOW);
+        digitalWrite(stepper::PIN_STEPPER_ENABLE, LOW);
 }
 // MAIN //
 
 // VARIABILIES //
 void Var()
 {
-
     pid::setpoint_float = pid::setpoint_int * 0.01;
-    if (spool_speed <= 2) {
-        spool_speed = 2;
-    } else if (spool_speed >= 30) {
-        spool_speed = 30;
-    }
-    spool_interval = spool_speed;
-    spool_rpm = 300 / spool_speed;
 
-    distrib_interval = 160 / travel_speed;
-
-    if (travel_speed <= 0) {
-        travel_speed = 0;
-    }
-    if (travel_speed >= 160) {
-        travel_speed = 160;
-    }
+    stepper::Var();
 
     sensor::offset_float = sensor::offset * 0.01;
     if (sensor::offset <= -25) {
@@ -135,9 +106,5 @@ void Var()
     } else if (sensor::offset >= 25) {
         sensor::offset = 25;
     }
-
-    distrib_new_position_end = (7900 / 4) - distrib_new_position;
-    distrib_steps = 2 * travel_step;
-    puller_total = puller_num_revs * 0.194;
 }
 // VARIABILIES //

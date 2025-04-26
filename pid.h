@@ -1,6 +1,7 @@
 #pragma once
 
 #include <PID_v1.h>
+#include "./stepper.h"
 
 namespace pid {
 

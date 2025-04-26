@@ -13,7 +13,7 @@ void Brain()
     // initialize the variables we're linked to
     setpoint = setpoint_int * 0.01;
     // Starting speed
-    puller_start_speed = pull_speed;
+    stepper::pull::start_speed = stepper::pull::speed;
 
     input = sensor::width;
 
@@ -22,9 +22,9 @@ void Brain()
 
     if (pid::mode == 3) { // manual mode
         inner_pid.SetMode(MANUAL);
-        ManualPull();
-        Distr();
-        Spool();
+        stepper::pull::tick();
+        stepper::distrib::tick();
+        stepper::spool::tick();
         return;
     }
 
@@ -64,11 +64,11 @@ void Brain()
     inner_pid.SetMode(AUTOMATIC);
     inner_pid.Compute();
     last_output = output;
-    puller_interval = output;
+    stepper::pull::interval = output;
 
     // do the thing
-    Pull();
-    Distr();
-    Spool();
+    stepper::pull::tick();
+    stepper::distrib::tick();
+    stepper::spool::tick();
 }
 }

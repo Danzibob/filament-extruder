@@ -36,8 +36,8 @@ void read()
     last = val;
 
     // TODO: this should probably be somewhere else
-    distrib_last_stepper_pos = distrib_stepper_pos;
-    mm = distrib_stepper_pos / steps_per_click;
+    stepper::distrib::last_pos = stepper::distrib::pos;
+    entering_mm = stepper::distrib::pos / steps_per_click;
 }
 
 }

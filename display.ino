@@ -3,7 +3,7 @@
 void drawHome()
 {
     // MenuHome
-    if (stepper_enabled == 0) {
+    if (stepper::enabled == 0) {
         lcd.setCursor(0, 0);
         lcd.print(" Spooler ready! ");
     } else {
@@ -30,7 +30,7 @@ void drawHome()
             lcd.setCursor(1, 0);
             lcd.print(abs(sensor::width), 2);
             lcd.setCursor(9, 0);
-            lcd.print(puller_interval, 2); // TODO: make this a speed, not an interval
+            lcd.print(stepper::pull::interval, 2); // TODO: make this a speed, not an interval
             lcd_prevMillis = currentMillis;
         }
     }
@@ -79,25 +79,29 @@ void drawMenu()
         } else if (menu_page == 3) {
             menu_page = 4;
         } else if (menu_page == 4) {
-            travel_begin = distrib_stepper_pos;
+            using namespace stepper::distrib;
+
+            travel_begin = pos;
+
             lcd.setCursor(0, 0);
             lcd.print("Wait while I'm");
             lcd.setCursor(0, 1);
             lcd.print("moving stepper");
-            digitalWrite(PIN_DISTRIB_DIR, HIGH);
-            for (int x = 0; x < distrib_new_position_end; x++) {
-
-                digitalWrite(PIN_DISTRIB_STEP, HIGH);
+            digitalWrite(stepper::PIN_DISTRIB_DIR, HIGH);
+            for (int x = 0; x < new_position_end; x++) {
+                digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                 delay(1);
-                digitalWrite(PIN_DISTRIB_STEP, LOW);
+                digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                 delay(1);
             }
 
-            distrib_stepper_pos = distrib_new_position_end;
+            pos = new_position_end;
             lcd.clear();
             menu_page = 5;
         } else if (menu_page == 5) {
-            travel_end = distrib_stepper_pos;
+            using namespace stepper::distrib;
+
+            travel_end = pos;
             travel_step = travel_end;
             if (pid::mode <= 2) {
                 menu_curr_item = 2;
@@ -136,13 +140,13 @@ void drawMenu()
             drawHome();
 
             lcd.setCursor(0, 1);
-            lcd.print(">  PullSpd:");
-            lcd.setCursor(12, 1);
-            lcd.print(extrude_speed2, 2);
+            lcd.print(">  PullSpd: ??"); // TODO
         } else if (menu_curr_item == 5) {
             drawHome();
             displayMenuItem(str_offset, 1, true, sensor::offset_float);
         } else if (menu_curr_item == 6) {
+            using namespace stepper::distrib;
+
             drawHome();
             lcd.setCursor(0, 1);
             lcd.print(">  TravSpd: ");
@@ -167,13 +171,13 @@ void drawMenu()
             }
         } else if (menu_curr_item == 7) {
             drawHome();
-            displayMenuItem(str_spool_speed, 1, true, spool_rpm);
+            displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm);
         } else if (menu_curr_item == 8) {
             drawHome();
             displayMenuItem(str_fan_speed, 1, true, fans::speed);
         } else if (menu_curr_item == 9) {
             drawHome();
-            displayMenuItem(str_stats, 1, true, puller_total);
+            displayMenuItem(str_stats, 1, true, stepper::pull::total);
         }
     } else if (menu_page == 1 && menu_curr_item >= 2 && pid::mode != 3) {
         if (menu_curr_item == 2) {
@@ -187,6 +191,7 @@ void drawMenu()
             drawHome();
             displayMenuItem(str_offset, 1, true, sensor::offset_float);
         } else if (menu_curr_item == 5) {
+            using namespace stepper::distrib;
             drawHome();
             lcd.setCursor(0, 1);
             lcd.print(">  TravSpd: ");
@@ -211,13 +216,13 @@ void drawMenu()
             }
         } else if (menu_curr_item == 6) {
             drawHome();
-            displayMenuItem(str_spool_speed, 1, true, spool_rpm);
+            displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm);
         } else if (menu_curr_item == 7) {
             drawHome();
             displayMenuItem(str_fan_speed, 1, true, fans::speed);
         } else if (menu_curr_item == 8) {
             drawHome();
-            displayMenuItem(str_stats, 1, true, puller_total);
+            displayMenuItem(str_stats, 1, true, stepper::pull::total);
         }
     }
     // Menu using structure end
@@ -263,102 +268,103 @@ void drawMenu()
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (menu_page == 4 && menu_curr_item == 1) {
+            using namespace stepper::distrib;
             lcd.setCursor(0, 0);
             lcd.print("Set Spool Begin:");
-            if (mm <= 9) {
+            if (entering_mm <= 9) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
                 lcd.setCursor(1, 1);
                 lcd.print(" ");
-            } else if (mm >= 10) {
+            } else if (entering_mm >= 10) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
             }
             if (encoder::up) {
                 encoder::up = false;
-                digitalWrite(PIN_DISTRIB_DIR, LOW);
-                if (distrib_stepper_pos > 0) {
-                    distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, LOW);
+                if (pos > 0) {
+                    pos = pos - steps_per_click;
                 } else
-                    distrib_stepper_pos = 0;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
+                    pos = 0;
+                if (pos != last_pos) {
                     for (int x = 0; x < steps_per_click; x++) {
-
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
                 }
-                distrib_new_position = distrib_stepper_pos;
+                new_position = pos;
             } else if (encoder::down) {
                 encoder::down = false;
-                digitalWrite(PIN_DISTRIB_DIR, HIGH);
-                if (distrib_stepper_pos < 7900 / 4) {
-                    distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, HIGH);
+                if (pos < 7900 / 4) {
+                    pos = pos + steps_per_click;
                 } else
-                    distrib_stepper_pos = 7900 / 4;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
+                    pos = 7900 / 4;
+                if (pos != last_pos) {
 
                     for (int x = 0; x < steps_per_click; x++) {
 
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
                 }
-                distrib_new_position = distrib_stepper_pos;
+                new_position = pos;
             }
         }
         //////////////////////////////////////////////////////////
         if (menu_page == 5 && menu_curr_item == 1) {
+            using namespace stepper::distrib;
+
             lcd.setCursor(0, 0);
             lcd.print("Set Spool End:");
-            if (mm <= 9) {
+            if (entering_mm <= 9) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
                 lcd.setCursor(1, 1);
                 lcd.print(" ");
-            } else if (mm >= 10) {
+            } else if (entering_mm >= 10) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
             }
 
+            using namespace stepper::distrib;
             if (encoder::up) {
                 encoder::up = false;
-                digitalWrite(PIN_DISTRIB_DIR, LOW);
-                if (distrib_stepper_pos > 0) {
-                    distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, LOW);
+                if (pos > 0) {
+                    pos = pos - steps_per_click;
                 } else
-                    distrib_stepper_pos = 0;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
-
+                    pos = 0;
+                if (pos != last_pos) {
                     for (int x = 0; x < steps_per_click; x++) {
-
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
                 }
             } else if (encoder::down) {
                 encoder::down = false;
-                digitalWrite(PIN_DISTRIB_DIR, HIGH);
-                if (distrib_stepper_pos < distrib_new_position_end) {
-                    distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, HIGH);
+                if (pos < new_position_end) {
+                    pos = pos + steps_per_click;
                 } else
-                    distrib_stepper_pos = distrib_new_position_end;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
+                    pos = new_position_end;
+                if (pos != last_pos) {
 
                     for (int x = 0; x < steps_per_click; x++) {
 
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
@@ -367,26 +373,28 @@ void drawMenu()
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (menu_page == 6 && menu_curr_item == 1) {
+            using namespace stepper::pull;
+
             lcd.setCursor(0, 0);
-            lcd.print("Set PullSpeed:");
+            lcd.print("Set PullIntvl:");
             lcd.setCursor(0, 1);
-            lcd.print(extrude_speed2, 2);
-            if (puller_interval == 0) {
-                puller_interval = 9000;
+            lcd.print(interval, 2);
+            if (interval == 0) {
+                interval = 9000;
             }
 
             if (encoder::up) {
                 encoder::up = false;
-                if (puller_interval < 90000) {
-                    puller_interval = puller_interval + 100;
+                if (interval < 90000) {
+                    interval = interval + 100;
                 } else
-                    puller_interval = puller_interval;
+                    interval = interval;
             } else if (encoder::down) {
                 encoder::down = false;
-                if (puller_interval > 1000) {
-                    puller_interval = puller_interval - 100;
+                if (interval > 1000) {
+                    interval = interval - 100;
                 } else
-                    puller_interval = puller_interval;
+                    interval = interval;
             }
         }
         // Manual Mode Setting
@@ -422,32 +430,32 @@ void drawMenu()
                 }
             }
         } else if (menu_page == 2 && menu_curr_item == 4) {
+            using namespace stepper::pull;
             drawHome();
             lcd.setCursor(0, 1);
             lcd.print("Set");
             lcd.setCursor(3, 1);
-            lcd.print("Pullspd");
+            lcd.print("Pullint");
             lcd.setCursor(11, 1);
             lcd.print("  ");
             lcd.setCursor(12, 1);
-            // extspd2 = 60 / ((pullspd * 400) / 1000) * 0.0942;
-            lcd.print(extrude_speed2, 2);
-            if (puller_interval == 0) {
-                puller_interval = 9000;
+            lcd.print(interval, 2);
+            if (interval == 0) {
+                interval = 9000;
             }
 
             if (encoder::up) {
                 encoder::up = false;
-                if (puller_interval < 90000) {
-                    puller_interval = puller_interval + 100;
+                if (interval < 90000) {
+                    interval = interval + 100;
                 } else
-                    puller_interval = puller_interval;
+                    interval = interval;
             } else if (encoder::down) {
                 encoder::down = false;
-                if (puller_interval > 1000) {
-                    puller_interval = puller_interval - 100;
+                if (interval > 1000) {
+                    interval = interval - 100;
                 } else
-                    puller_interval = puller_interval;
+                    interval = interval;
             }
         } else if (menu_page == 2 && menu_curr_item == 5) {
             drawHome();
@@ -477,6 +485,8 @@ void drawMenu()
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 6) {
+            using namespace stepper::distrib;
+
             drawHome();
             lcd.setCursor(0, 1);
             lcd.print("Set TravSpd ");
@@ -508,13 +518,13 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();
-            displayIntMenuPage(str_spool_speed, 1, spool_rpm);
+            displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm);
             if (encoder::up) {
                 encoder::up = false;
-                spool_speed++;
+                stepper::spool::speed++;
             } else if (encoder::down) {
                 encoder::down = false;
-                spool_speed--;
+                stepper::spool::speed--;
             }
         } else if (menu_page == 2 && menu_curr_item == 8) {
             drawHome();
@@ -531,7 +541,7 @@ void drawMenu()
             lcd.setCursor(0, 1);
             lcd.print("Total meter:");
             lcd.setCursor(13, 1);
-            lcd.print(puller_total);
+            lcd.print(stepper::pull::total);
         }
     }
 
@@ -572,103 +582,105 @@ void drawMenu()
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (menu_page == 4 && menu_curr_item == 1) {
+            using namespace stepper::distrib;
             lcd.setCursor(0, 0);
             lcd.print("Set Spool Begin:");
-            if (mm <= 9) {
+            if (entering_mm <= 9) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
                 lcd.setCursor(1, 1);
                 lcd.print(" ");
-            } else if (mm >= 10) {
+            } else if (entering_mm >= 10) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
             }
             if (encoder::up) {
                 encoder::up = false;
-                digitalWrite(PIN_DISTRIB_DIR, LOW);
-                if (distrib_stepper_pos > 0) {
-                    distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, LOW);
+                if (pos > 0) {
+                    pos = pos - steps_per_click;
                 } else
-                    distrib_stepper_pos = 0;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
+                    pos = 0;
+                if (pos != last_pos) {
 
                     for (int x = 0; x < steps_per_click; x++) {
 
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
                 }
-                distrib_new_position = distrib_stepper_pos;
+                new_position = pos;
             } else if (encoder::down) {
                 encoder::down = false;
-                digitalWrite(PIN_DISTRIB_DIR, HIGH);
-                if (distrib_stepper_pos < 7900 / 4) {
-                    distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, HIGH);
+                if (pos < 7900 / 4) {
+                    pos = pos + steps_per_click;
                 } else
-                    distrib_stepper_pos = 7900 / 4;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
+                    pos = 7900 / 4;
+                if (pos != last_pos) {
 
                     for (int x = 0; x < steps_per_click; x++) {
 
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
                 }
-                distrib_new_position = distrib_stepper_pos;
+                new_position = pos;
             }
         }
         //////////////////////////////////////////////////////////////////////////////////////
         if (menu_page == 5 && menu_curr_item == 1) {
+            using namespace stepper::distrib;
             lcd.setCursor(0, 0);
             lcd.print("Set Spool End:");
-            if (mm <= 9) {
+            if (entering_mm <= 9) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
                 lcd.setCursor(1, 1);
                 lcd.print(" ");
-            } else if (mm >= 10) {
+            } else if (entering_mm >= 10) {
                 lcd.setCursor(0, 1);
-                lcd.print(mm);
+                lcd.print(entering_mm);
             }
 
             if (encoder::up) {
                 encoder::up = false;
-                digitalWrite(PIN_DISTRIB_DIR, LOW);
-                if (distrib_stepper_pos > 0) {
-                    distrib_stepper_pos = distrib_stepper_pos - steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, LOW);
+                if (pos > 0) {
+                    pos = pos - steps_per_click;
                 } else
-                    distrib_stepper_pos = 0;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
+                    pos = 0;
+                if (pos != last_pos) {
 
                     for (int x = 0; x < steps_per_click; x++) {
 
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
                 }
             } else if (encoder::down) {
                 encoder::down = false;
-                digitalWrite(PIN_DISTRIB_DIR, HIGH);
-                if (distrib_stepper_pos < distrib_new_position_end) {
-                    distrib_stepper_pos = distrib_stepper_pos + steps_per_click;
+                digitalWrite(stepper::PIN_DISTRIB_DIR, HIGH);
+                if (pos < new_position_end) {
+                    pos = pos + steps_per_click;
                 } else
-                    distrib_stepper_pos = distrib_new_position_end;
-                if (distrib_stepper_pos != distrib_last_stepper_pos) {
+                    pos = new_position_end;
+                if (pos != last_pos) {
 
                     for (int x = 0; x < steps_per_click; x++) {
 
-                        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, HIGH);
                         delay(1);
-                        digitalWrite(PIN_DISTRIB_STEP, LOW);
+                        digitalWrite(stepper::PIN_DISTRIB_STEP, LOW);
                         delay(1);
                         // steppini--;
                     }
@@ -680,7 +692,7 @@ void drawMenu()
             lcd.setCursor(0, 0);
             lcd.print("Set PullSpeed:");
             lcd.setCursor(0, 1);
-            lcd.print(pull_speed);
+            lcd.print(stepper::pull::speed);
         }
         // Preset Mode Setting
         // End________________________________________________________________
@@ -749,6 +761,7 @@ void drawMenu()
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 5) {
+            using namespace stepper::distrib;
             drawHome();
             lcd.setCursor(0, 1);
             lcd.print("Set TravSpd ");
@@ -777,13 +790,13 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 6) {
             drawHome();
-            displayIntMenuPage(str_spool_speed, 1, spool_rpm);
+            displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm);
             if (encoder::up) {
                 encoder::up = false;
-                spool_speed++;
+                stepper::spool::speed++;
             } else if (encoder::down) {
                 encoder::down = false;
-                spool_speed--;
+                stepper::spool::speed--;
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();
@@ -801,7 +814,7 @@ void drawMenu()
             lcd.setCursor(0, 1);
             lcd.print("Total meter:");
             lcd.setCursor(13, 1);
-            lcd.print(puller_total);
+            lcd.print(stepper::pull::total);
         }
     }
 
