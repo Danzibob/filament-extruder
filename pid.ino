@@ -15,7 +15,7 @@ void Brain()
     // Starting speed
     stepper::pull::start_speed = stepper::pull::speed;
 
-    input = sensor::width;
+    input = sensor::width();
 
     if (menu_curr_item == 1) // paused
         return;

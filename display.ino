@@ -28,7 +28,7 @@ void drawHome()
         unsigned long currentMillis = millis();
         if (currentMillis - lcd_prevMillis >= lcd_interval) {
             lcd.setCursor(1, 0);
-            lcd.print(abs(sensor::width), 2);
+            lcd.print(abs(sensor::width()), 2);
             lcd.setCursor(9, 0);
             lcd.print(stepper::pull::interval, 2); // TODO: make this a speed, not an interval
             lcd_prevMillis = currentMillis;
@@ -143,7 +143,7 @@ void drawMenu()
             lcd.print(">  PullSpd: ??"); // TODO
         } else if (menu_curr_item == 5) {
             drawHome();
-            displayMenuItem(str_offset, 1, true, sensor::offset_float);
+            displayMenuItem(str_offset, 1, true, sensor::offset_mm());
         } else if (menu_curr_item == 6) {
             using namespace stepper::distrib;
 
@@ -189,7 +189,7 @@ void drawMenu()
         } else if (menu_curr_item == 4) {
 
             drawHome();
-            displayMenuItem(str_offset, 1, true, sensor::offset_float);
+            displayMenuItem(str_offset, 1, true, sensor::offset_mm());
         } else if (menu_curr_item == 5) {
             using namespace stepper::distrib;
             drawHome();
@@ -459,7 +459,7 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 5) {
             drawHome();
-            if (sensor::offset_float >= 0) {
+            if (sensor::offset_mm() >= 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
@@ -467,23 +467,22 @@ void drawMenu()
                 lcd.setCursor(11, 1);
                 lcd.print("  ");
                 lcd.setCursor(12, 1);
-                lcd.print(sensor::offset_float, 2);
-            } else if (sensor::offset_float < 0) {
+                lcd.print(sensor::offset_mm(), 2);
+            } else if (sensor::offset_mm() < 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
                 lcd.print("Offset");
                 lcd.setCursor(11, 1);
-                lcd.print(sensor::offset_float, 2);
+                lcd.print(sensor::offset_mm(), 2);
             }
             if (encoder::up) {
                 encoder::up = false;
-                sensor::offset--;
+                sensor::setOffset(sensor::offset() - 1);
             } else if (encoder::down) {
                 encoder::down = false;
-                sensor::offset++;
+                sensor::setOffset(sensor::offset() + 1);
             }
-            eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 6) {
             using namespace stepper::distrib;
 
@@ -734,7 +733,7 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 4) {
             drawHome();
-            if (sensor::offset_float >= 0) {
+            if (sensor::offset_mm() >= 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
@@ -742,22 +741,22 @@ void drawMenu()
                 lcd.setCursor(11, 1);
                 lcd.print("  ");
                 lcd.setCursor(12, 1);
-                lcd.print(sensor::offset_float, 2);
-            } else if (sensor::offset_float < 0) {
+                lcd.print(sensor::offset_mm(), 2);
+            } else if (sensor::offset_mm() < 0) {
                 lcd.setCursor(0, 1);
                 lcd.print("Set");
                 lcd.setCursor(3, 1);
                 lcd.print("Offset");
                 lcd.setCursor(11, 1);
-                lcd.print(sensor::offset_float, 2);
+                lcd.print(sensor::offset_mm(), 2);
             }
 
             if (encoder::up) {
                 encoder::up = false;
-                sensor::offset--;
+                sensor::setOffset(sensor::offset() - 1);
             } else if (encoder::down) {
                 encoder::down = false;
-                sensor::offset++;
+                sensor::setOffset(sensor::offset() + 1);
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 5) {
@@ -950,14 +949,14 @@ void displayMenuItem(String item, int position, boolean selected, int value)
     }
 
     if (menu_curr_item == 4) {
-        if (sensor::offset_float >= 0) {
+        if (sensor::offset_mm() >= 0) {
             lcd.setCursor(11, position);
             lcd.print("+");
             lcd.setCursor(12, position);
-            lcd.print(sensor::offset_float, 2);
-        } else if (sensor::offset_float < 0) {
+            lcd.print(sensor::offset_mm(), 2);
+        } else if (sensor::offset_mm() < 0) {
             lcd.setCursor(11, position);
-            lcd.print(sensor::offset_float, 2);
+            lcd.print(sensor::offset_mm(), 2);
         }
     }
 }

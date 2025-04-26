@@ -2,7 +2,7 @@
 
 namespace eeprom {
 void load() {
-    sensor::offset = EEPROM.read(addr_offset);
+    sensor::setOffset(EEPROM.read(addr_offset));
 
     // EEPROM
     pid::setpoint_int = ((EEPROM.read(addr_setpoint) * 256) + EEPROM.read(addr_setpoint + 1));

@@ -78,7 +78,7 @@ void loop()
     Var();
     fans::set();
 
-    if (sensor::width - sensor::offset_float <= 0.10 && menu_curr_item != 1) {
+    if (sensor::width() - sensor::offset() <= 0.10 && menu_curr_item != 1) {
         // myPID.SetMode(MANUAL);
         stepper::enabled = 0;
     } else {
@@ -99,12 +99,5 @@ void Var()
     pid::setpoint_float = pid::setpoint_int * 0.01;
 
     stepper::Var();
-
-    sensor::offset_float = sensor::offset * 0.01;
-    if (sensor::offset <= -25) {
-        sensor::offset = -25;
-    } else if (sensor::offset >= 25) {
-        sensor::offset = 25;
-    }
 }
 // VARIABILIES //
