@@ -12,3 +12,6 @@ format:
 
 build:
 	arduino-cli compile --fqbn arduino:avr:nano .
+
+flash:
+	arduino-cli compile -p /dev/ttyUSB1 --upload --fqbn arduino:avr:nano:cpu=atmega328old .
