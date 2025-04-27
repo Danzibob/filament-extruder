@@ -9,20 +9,6 @@ void drawHome()
     } else {
         lcd.setCursor(0, 0);
         lcd.print(char(0));
-        unsigned long currentMillis = millis();
-        if (currentMillis - lcd_prevMillis >= lcd_interval) {
-            // save the last time you blinked the LED
-            lcd_prevMillis = currentMillis;
-            lcd.setCursor(1, 0);
-            lcd.print(abs(sensor::width));
-            lcd.setCursor(9, 0);
-            if (pid::mode != 3) {
-                lcd.print(extrude_speed, 2);
-            } else
-                lcd.print(extrude_speed2, 2);
-            lcd.setCursor(13, 0);
-            lcd.print(" ");
-        }
         lcd.setCursor(5, 0);
         lcd.print(char(2));
         lcd.setCursor(6, 0);
@@ -38,6 +24,15 @@ void drawHome()
         lcd.print(char(3));
         lcd.setCursor(15, 0);
         lcd.print(char(4));
+
+        unsigned long currentMillis = millis();
+        if (currentMillis - lcd_prevMillis >= lcd_interval) {
+            lcd.setCursor(1, 0);
+            lcd.print(abs(sensor::width), 2);
+            lcd.setCursor(9, 0);
+            lcd.print(puller_interval, 2); // TODO: make this a speed, not an interval
+            lcd_prevMillis = currentMillis;
+        }
     }
 }
 

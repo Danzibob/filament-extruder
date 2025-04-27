@@ -13,7 +13,7 @@
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 unsigned long lcd_prevMillis = 0;
-int lcd_interval = 100;
+unsigned long lcd_interval = 15;
 
 // Menu state
 int menu_curr_item = 1;
