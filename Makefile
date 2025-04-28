@@ -11,7 +11,7 @@ format:
 	find -iname '*.h' -o -iname '*.ino' | xargs clang-format -i --style=webkit
 
 build:
-	arduino-cli compile --fqbn arduino:avr:nano .
+	arduino-cli compile --fqbn arduino:avr:nano --build-property compiler.warning_level=all .
 
 flash:
 	arduino-cli compile -p /dev/ttyUSB1 --upload --fqbn arduino:avr:nano:cpu=atmega328old .
