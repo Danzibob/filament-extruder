@@ -16,22 +16,16 @@ int enabled = 1;
 
 namespace pull {
 
-int step = HIGH;
-float speed = 12;
+unsigned long interval();
+void setInterval(unsigned long interval);
 
-unsigned long time;
-unsigned long previous_millis = 0;
-float interval = 0;
-
-int step_in_rev = 0;
-int num_revs = 0;
-float total = 0;
-
-float start_speed = 0;
-float start_speed_min;
-float start_speed_max;
+float speed();
+void setSpeed(float speed);
 
 void tick();
+
+float total();
+void resetCounter();
 
 }
 

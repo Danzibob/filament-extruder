@@ -63,11 +63,11 @@ void loop()
     case ClickEncoder::DoubleClicked:
         if (pid::mode < 3) {
             if (menu_page == 2 && menu_curr_item == 8) {
-                stepper::pull::num_revs = 0;
+                stepper::pull::resetCounter();
             }
         } else if (pid::mode == 3) {
             if (menu_page == 2 && menu_curr_item == 9) {
-                stepper::pull::num_revs = 0;
+                stepper::pull::resetCounter();
             }
         }
         break;

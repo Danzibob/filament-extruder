@@ -30,9 +30,6 @@ namespace pid {
 
 void Brain()
 {
-    // Starting speed
-    stepper::pull::start_speed = stepper::pull::speed;
-
     input = sensor::width();
 
     if (menu_curr_item == 1) // paused
@@ -82,7 +79,7 @@ void Brain()
     inner_pid.SetMode(AUTOMATIC);
     inner_pid.Compute();
     last_output = output;
-    stepper::pull::interval = output;
+    stepper::pull::setInterval(output);
 
     // do the thing
     stepper::pull::tick();

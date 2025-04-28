@@ -24,15 +24,34 @@ namespace stepper {
 // Puller
 namespace pull {
 
+int step = HIGH;
+unsigned long previous_millis = 0;
+unsigned long curr_interval = 9000;
+
+const int STEPS_PER_REV = 400;
+
+int step_in_rev = 0;
+int num_revs = 0;
+
 void tick()
 {
     digitalWrite(PIN_PULLER_DIR, HIGH);
-    stepperTick(PIN_PULLER_STEP, &step, &previous_millis, interval, &step_in_rev);
-    if (step_in_rev == 400) {
+    stepperTick(PIN_PULLER_STEP, &step, &previous_millis, curr_interval, &step_in_rev);
+    if (step_in_rev == STEPS_PER_REV) {
         step_in_rev = 0;
         num_revs++;
     }
 }
+
+unsigned long interval() { return curr_interval; }
+void setInterval(unsigned long interval) { curr_interval = interval; }
+
+// TODO: not convinced either of these are right
+float speed() { return 60 / ((interval() * 400) / 1000) * 0.062; }
+void setSpeed(float speed) { curr_interval = 1000 * (60 / (speed / 0.062)) / 400; }
+
+float total() { return num_revs * 0.194; }
+void resetCounter() { num_revs = 0; step_in_rev = 0; }
 
 }
 
@@ -120,8 +139,6 @@ void Var() {
 
     distrib::new_position_end = (7900 / 4) - distrib::new_position;
     distrib::steps = 2 * distrib::travel_step;
-    pull::total = pull::num_revs * 0.194;
-
 }
 
 }

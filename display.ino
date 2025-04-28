@@ -30,7 +30,7 @@ void drawHome()
             lcd.setCursor(1, 0);
             lcd.print(abs(sensor::width()), 2);
             lcd.setCursor(9, 0);
-            lcd.print(stepper::pull::interval, 2); // TODO: make this a speed, not an interval
+            lcd.print(stepper::pull::interval(), 2); // TODO: make this a speed, not an interval
             lcd_prevMillis = currentMillis;
         }
     }
@@ -177,7 +177,7 @@ void drawMenu()
             displayMenuItem(str_fan_speed, 1, true, fans::speed);
         } else if (menu_curr_item == 9) {
             drawHome();
-            displayMenuItem(str_stats, 1, true, stepper::pull::total);
+            displayMenuItem(str_stats, 1, true, stepper::pull::total());
         }
     } else if (menu_page == 1 && menu_curr_item >= 2 && pid::mode() != 3) {
         if (menu_curr_item == 2) {
@@ -368,25 +368,16 @@ void drawMenu()
             using namespace stepper::pull;
 
             lcd.setCursor(0, 0);
-            lcd.print("Set PullIntvl:");
+            lcd.print("Set PullSpeed:");
             lcd.setCursor(0, 1);
-            lcd.print(interval, 2);
-            if (interval == 0) {
-                interval = 9000;
-            }
+            lcd.print(speed(), 2);
 
             if (encoder::up) {
                 encoder::up = false;
-                if (interval < 90000) {
-                    interval = interval + 100;
-                } else
-                    interval = interval;
+                setInterval(min(interval() + 100, 90000));
             } else if (encoder::down) {
                 encoder::down = false;
-                if (interval > 1000) {
-                    interval = interval - 100;
-                } else
-                    interval = interval;
+                setInterval(max(interval() - 100, 1000));
             }
         }
         // Manual Mode Setting
@@ -423,23 +414,14 @@ void drawMenu()
             lcd.setCursor(11, 1);
             lcd.print("  ");
             lcd.setCursor(12, 1);
-            lcd.print(interval, 2);
-            if (interval == 0) {
-                interval = 9000;
-            }
+            lcd.print(interval(), 2);
 
             if (encoder::up) {
                 encoder::up = false;
-                if (interval < 90000) {
-                    interval = interval + 100;
-                } else
-                    interval = interval;
+                setInterval(min(interval() + 100, 90000));
             } else if (encoder::down) {
                 encoder::down = false;
-                if (interval > 1000) {
-                    interval = interval - 100;
-                } else
-                    interval = interval;
+                setInterval(max(interval() - 100, 1000));
             }
         } else if (menu_page == 2 && menu_curr_item == 5) {
             drawHome();
@@ -524,7 +506,7 @@ void drawMenu()
             lcd.setCursor(0, 1);
             lcd.print("Total meter:");
             lcd.setCursor(13, 1);
-            lcd.print(stepper::pull::total);
+            lcd.print(stepper::pull::total());
         }
     }
 
@@ -667,7 +649,7 @@ void drawMenu()
             lcd.setCursor(0, 0);
             lcd.print("Set PullSpeed:");
             lcd.setCursor(0, 1);
-            lcd.print(stepper::pull::speed);
+            lcd.print(stepper::pull::speed());
         }
         // Preset Mode Setting
         // End________________________________________________________________
@@ -782,7 +764,7 @@ void drawMenu()
             lcd.setCursor(0, 1);
             lcd.print("Total meter:");
             lcd.setCursor(13, 1);
-            lcd.print(stepper::pull::total);
+            lcd.print(stepper::pull::total());
         }
     }
 
