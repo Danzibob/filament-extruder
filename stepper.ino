@@ -21,7 +21,6 @@ void stepperTick(const int pin, int *step, unsigned long *previous_millis, int i
 
 namespace stepper {
 
-// Puller
 namespace pull {
 
 int step = HIGH;
@@ -29,6 +28,7 @@ unsigned long previous_millis = 0;
 unsigned long curr_interval = 9000;
 
 const int STEPS_PER_REV = 400;
+const int MM_PER_REV = 94; // diam = 30mm
 
 int step_in_rev = 0;
 int num_revs = 0;
@@ -46,17 +46,33 @@ void tick()
 unsigned long interval() { return curr_interval; }
 void setInterval(unsigned long interval) { curr_interval = interval; }
 
-// TODO: not convinced either of these are right
-float speed() { return 60 / ((interval() * 400) / 1000) * 0.062; }
-void setSpeed(float speed) { setInterval(1000 * (60 / (speed / 0.062)) / 400); }
+// mm / sec
+float speed() {
+    float revs_per_sec = (1000.0 / float(interval())) / float(STEPS_PER_REV);
+    float speed = float(MM_PER_REV) * revs_per_sec;
+    if (!isfinite(speed)) {
+        setSpeed(1.0);
+        return 1.0;
+    }
+    return speed;
+}
+void setSpeed(float speed) {
+    float revs_per_sec = speed / float(MM_PER_REV);
+    float steps_per_sec = revs_per_sec * float(STEPS_PER_REV);
+    float new_interval = 1000.0 / steps_per_sec;
+    if (isfinite(new_interval))
+        setInterval(new_interval);
+}
 
-float total() { return num_revs * 0.194; }
+float total() { return num_revs * MM_PER_REV; }
 void resetCounter() { num_revs = 0; step_in_rev = 0; }
 
 }
 
 
 namespace spool {
+
+const int STEPS_PER_REV = 300;
 
 int step = HIGH;
 
@@ -72,8 +88,12 @@ void tick()
 float interval() { return curr_interval; }
 void setInterval(float interval) { curr_interval = interval; }
 
-float rpm() { return 300/interval(); }
-void setRpm(float rpm) { setInterval(300 / rpm); }
+float rpm() {
+    return (interval() * STEPS_PER_REV) / (60.0 * 1000.0);
+}
+void setRpm(float rpm) {
+    return (60.0 * 1000.0) / (rpm * STEPS_PER_REV);
+}
 
 }
 
@@ -155,6 +175,7 @@ void goToPos(int new_pos) {
     }
 
     dir = !dir;
+    digitalWrite(PIN_DISTRIB_DIR, dir);
 }
 
 void goToStart() { goToPos(pos_start); }
@@ -175,6 +196,9 @@ void init()
 
     pinMode(PIN_STEPPER_ENABLE, OUTPUT);
 
+    // TODO: find better default values probably
+    pull::setSpeed(1.0);
+    spool::setRpm(1.0);
     distrib::reset();
 }
 

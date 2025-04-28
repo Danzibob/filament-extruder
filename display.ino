@@ -30,7 +30,7 @@ void drawHome()
             lcd.setCursor(1, 0);
             lcd.print(abs(sensor::width()), 2);
             lcd.setCursor(9, 0);
-            lcd.print(stepper::pull::interval(), 2); // TODO: make this a speed, not an interval
+            lcd.print(stepper::pull::speed(), 2);
             lcd_prevMillis = currentMillis;
         }
     }
@@ -134,7 +134,9 @@ void drawMenu()
             drawHome();
 
             lcd.setCursor(0, 1);
-            lcd.print(">  PullSpd: ??"); // TODO
+            lcd.print(">  PullSpd: "); // TODO
+            lcd.setCursor(12, 1);
+            lcd.print(stepper::pull::speed());
         } else if (menu_curr_item == 5) {
             drawHome();
             displayMenuItem(str_offset, 1, true, sensor::offset_mm());
@@ -182,7 +184,7 @@ void drawMenu()
             displayMenuItem(str_fan_speed, 1, true, fans::speed);
         } else if (menu_curr_item == 8) {
             drawHome();
-            displayMenuItem(str_stats, 1, true, stepper::pull::total);
+            displayMenuItem(str_stats, 1, true, stepper::pull::total());
         }
     }
     // Menu using structure end
@@ -261,16 +263,16 @@ void drawMenu()
             using namespace stepper::pull;
 
             lcd.setCursor(0, 0);
-            lcd.print("Set PullSpeed:");
+            lcd.print("Set PullSpd:");
             lcd.setCursor(0, 1);
             lcd.print(speed(), 2);
 
             if (encoder::up) {
                 encoder::up = false;
-                setInterval(min(interval() + 100, 90000));
+                setSpeed(speed() + 0.10);
             } else if (encoder::down) {
                 encoder::down = false;
-                setInterval(max(interval() - 100, 1000));
+                setSpeed(max(speed() - 0.10, 0.1));
             }
         }
         // Manual Mode Setting
@@ -303,18 +305,18 @@ void drawMenu()
             lcd.setCursor(0, 1);
             lcd.print("Set");
             lcd.setCursor(3, 1);
-            lcd.print("Pullint");
+            lcd.print("PullSpeed");
             lcd.setCursor(11, 1);
             lcd.print("  ");
             lcd.setCursor(12, 1);
-            lcd.print(interval(), 2);
+            lcd.print(speed(), 2);
 
             if (encoder::up) {
                 encoder::up = false;
-                setInterval(min(interval() + 100, 90000));
+                setSpeed(speed() + 0.10);
             } else if (encoder::down) {
                 encoder::down = false;
-                setInterval(max(interval() - 100, 1000));
+                setSpeed(max(speed() - 0.10, 0.1));
             }
         } else if (menu_page == 2 && menu_curr_item == 5) {
             drawHome();
@@ -366,7 +368,7 @@ void drawMenu()
                 stepper::spool::setRpm(stepper::spool::rpm() + 10);
             } else if (encoder::down) {
                 encoder::down = false;
-                stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0));
+                stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0.1));
             }
         } else if (menu_page == 2 && menu_curr_item == 8) {
             drawHome();
@@ -453,10 +455,19 @@ void drawMenu()
         }
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (menu_page == 6 && menu_curr_item == 1) {
+            using namespace stepper::pull;
             lcd.setCursor(0, 0);
             lcd.print("Set PullSpeed:");
             lcd.setCursor(0, 1);
-            lcd.print(stepper::pull::speed());
+            lcd.print(speed());
+
+            if (encoder::up) {
+                encoder::up = false;
+                setSpeed(speed() + 0.10);
+            } else if (encoder::down) {
+                encoder::down = false;
+                setSpeed(max(speed() - 0.10, 0.1));
+            }
         }
         // Preset Mode Setting
         // End________________________________________________________________
@@ -539,7 +550,7 @@ void drawMenu()
                 stepper::spool::setRpm(stepper::spool::rpm() + 10);
             } else if (encoder::down) {
                 encoder::down = false;
-                stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0));
+                stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0.1));
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();
