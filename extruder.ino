@@ -96,8 +96,6 @@ void loop()
 // VARIABILIES //
 void Var()
 {
-    pid::setpoint_float = pid::setpoint_int * 0.01;
-
     stepper::Var();
 }
 // VARIABILIES //

@@ -2,7 +2,27 @@
 
 namespace {
 
-PID inner_pid(&pid::input, &pid::output, &pid::setpoint, pid::modes::soft.kp, pid::modes::soft.kp, pid::modes::soft.kd, DIRECT);
+double curr_setpoint, input, output;
+float last_output = 0;
+
+pid::PIDMode curr_mode;
+
+struct PIDDetails {
+    double kp;
+    double ki;
+    double kd;
+};
+
+namespace modes {
+
+PIDDetails soft = {6.9, 0.23, 5.175};
+PIDDetails medium = {10.8, 0.45, 6.48};
+PIDDetails hard = {15.48, 0.62, 9.675};
+PIDDetails hard2 = {0.1548, 0.0062, 0.9675};
+
+}
+
+PID inner_pid(&input, &output, &curr_setpoint, modes::soft.kp, modes::soft.kp, modes::soft.kd, DIRECT);
 
 }
 
@@ -10,8 +30,6 @@ namespace pid {
 
 void Brain()
 {
-    // initialize the variables we're linked to
-    setpoint = setpoint_int * 0.01;
     // Starting speed
     stepper::pull::start_speed = stepper::pull::speed;
 
@@ -20,7 +38,7 @@ void Brain()
     if (menu_curr_item == 1) // paused
         return;
 
-    if (pid::mode == 3) { // manual mode
+    if (curr_mode == Manual) { // manual mode
         inner_pid.SetMode(MANUAL);
         stepper::pull::tick();
         stepper::distrib::tick();
@@ -30,32 +48,32 @@ void Brain()
 
     // set output limits
     inner_pid.SetOutputLimits(6, 120);
-    if (setpoint >= 2.4) {
+    if (setpoint() >= 240) {
         inner_pid.SetOutputLimits(12, 100);
     }
 
     // get tuning parameters to use
-    PIDMode *mode_tuning;
-    switch (mode) {
-    case 0:
-        mode_tuning = &pid::modes::soft;
+    PIDDetails *mode_tuning;
+    switch (curr_mode) {
+    case Soft:
+        mode_tuning = &modes::soft;
         break;
 
-    case 1:
-        mode_tuning = &pid::modes::medium;
+    case Medium:
+        mode_tuning = &modes::medium;
         break;
 
-    case 2:
-        double gap = abs(setpoint - input); // distance away from setpoint
+    case Hard:
+        double gap = abs(curr_setpoint - input); // distance away from setpoint
         if (gap >= 0.06)
-            mode_tuning = &pid::modes::hard;
+            mode_tuning = &modes::hard;
         else
-            mode_tuning = &pid::modes::hard2;
+            mode_tuning = &modes::hard2;
         break;
 
     default:
-        mode = 0;
-        mode_tuning = &pid::modes::soft;
+        setMode(Soft);
+        mode_tuning = &modes::soft;
     };
 
 
@@ -71,4 +89,16 @@ void Brain()
     stepper::distrib::tick();
     stepper::spool::tick();
 }
+
+int setpoint() { return int(curr_setpoint * 100.0); }
+void setSetpoint(int setpoint) {
+    curr_setpoint = setpoint * 0.01;
+}
+double setpoint_mm() { return curr_setpoint; }
+
+PIDMode mode() { return curr_mode; };
+void setMode(PIDMode mode) {
+    curr_mode = mode;
+    // TODO: set tunings here?
+};
 }

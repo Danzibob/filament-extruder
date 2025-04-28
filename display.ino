@@ -56,9 +56,9 @@ void drawMenu()
         encoder::down = false;
         menu_last_item = menu_curr_item;
         menu_curr_item++;
-        if (menu_curr_item == 10 && pid::mode == 3) {
+        if (menu_curr_item == 10 && pid::mode() == 3) {
             menu_curr_item--;
-        } else if (menu_curr_item == 9 && pid::mode != 3) {
+        } else if (menu_curr_item == 9 && pid::mode() != 3) {
             menu_curr_item--;
         }
     }
@@ -103,7 +103,7 @@ void drawMenu()
 
             travel_end = pos;
             travel_step = travel_end;
-            if (pid::mode <= 2) {
+            if (pid::mode() <= 2) {
                 menu_curr_item = 2;
                 menu_page = 1;
             } else
@@ -128,13 +128,13 @@ void drawMenu()
     // MENU UI END
 
     // Menu using structure begin
-    if (menu_page == 1 && menu_curr_item >= 2 && pid::mode == 3) {
+    if (menu_page == 1 && menu_curr_item >= 2 && pid::mode() == 3) {
         if (menu_curr_item == 2) {
             drawHome();
-            displayMenuItem(str_diam, 1, true, pid::setpoint_float);
+            displayMenuItem(str_diam, 1, true, pid::setpoint_mm());
         } else if (menu_curr_item == 3) {
             drawHome();
-            displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode]);
+            displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode()]);
         } else if (menu_curr_item == 4) {
 
             drawHome();
@@ -179,13 +179,13 @@ void drawMenu()
             drawHome();
             displayMenuItem(str_stats, 1, true, stepper::pull::total);
         }
-    } else if (menu_page == 1 && menu_curr_item >= 2 && pid::mode != 3) {
+    } else if (menu_page == 1 && menu_curr_item >= 2 && pid::mode() != 3) {
         if (menu_curr_item == 2) {
             drawHome();
-            displayMenuItem(str_diam, 1, true, pid::setpoint_float);
+            displayMenuItem(str_diam, 1, true, pid::setpoint_mm());
         } else if (menu_curr_item == 3) {
             drawHome();
-            displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode]);
+            displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode()]);
         } else if (menu_curr_item == 4) {
 
             drawHome();
@@ -227,27 +227,19 @@ void drawMenu()
     }
     // Menu using structure end
 
-    if (pid::mode == 3) {
+    if (pid::mode() == 3) {
 
         // Manual Mode Setting
         // Begin___________________________________________________________
         if (menu_page == 2 && menu_curr_item == 1) {
             // digitalWrite (enablePin, HIGH);
-            displayStringMenuPage(mode[pid::mode]);
+          displayStringMenuPage(mode[pid::mode()]);
             if (encoder::up) {
                 encoder::up = false;
-                pid::mode--;
-
-                if (pid::mode <= 0) {
-                    pid::mode = 0;
-                }
+                pid::setMode(max(pid::mode() - 1, 0));
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::mode++;
-
-                if (pid::mode >= 3) {
-                    pid::mode = 3;
-                }
+                pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
             }
         }
         if (menu_page == 3 && menu_curr_item == 1) {
@@ -255,14 +247,14 @@ void drawMenu()
             lcd.setCursor(0, 0);
             lcd.print("Set Diameter:");
             lcd.setCursor(0, 1);
-            lcd.print(pid::setpoint_float, 2);
+            lcd.print(pid::setpoint_mm(), 2);
 
             if (encoder::up) {
                 encoder::up = false;
-                pid::setpoint_int--;
+                pid::setSetpoint(pid::setpoint() - 1);
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::setpoint_int++;
+                pid::setSetpoint(pid::setpoint() + 1);
             }
             eeprom::update();
         }
@@ -402,32 +394,24 @@ void drawMenu()
 
         if (menu_page == 2 && menu_curr_item == 2) {
             drawHome();
-            displayIntMenuPage(str_diam, 1, pid::setpoint_float);
+            displayIntMenuPage(str_diam, 1, pid::setpoint_mm());
             if (encoder::up) {
                 encoder::up = false;
-                pid::setpoint_int--;
+                pid::setSetpoint(pid::setpoint() - 1);
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::setpoint_int++;
+                pid::setSetpoint(pid::setpoint() + 1);
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
-            displayString2MenuPage(mode[pid::mode]);
+            displayString2MenuPage(mode[pid::mode()]);
             if (encoder::up) {
                 encoder::up = false;
-                pid::mode--;
-
-                if (pid::mode <= 0) {
-                    pid::mode = 0;
-                }
+                pid::setMode(max(pid::mode() - 1, 0));
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::mode++;
-
-                if (pid::mode >= 3) {
-                    pid::mode = 3;
-                }
+                pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
             }
         } else if (menu_page == 2 && menu_curr_item == 4) {
             using namespace stepper::pull;
@@ -544,38 +528,30 @@ void drawMenu()
         }
     }
 
-    else if (pid::mode != 3) {
+    else if (pid::mode() != 3) {
         // Preset Mode Setting
         // Begin_____________________________________________________________
         if (menu_page == 2 && menu_curr_item == 1) {
-            displayStringMenuPage(mode[pid::mode]);
+            displayStringMenuPage(mode[pid::mode()]);
             if (encoder::up) {
                 encoder::up = false;
-                pid::mode--;
-
-                if (pid::mode <= 0) {
-                    pid::mode = 0;
-                }
+                pid::setMode(max(pid::mode() - 1, 0));
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::mode++;
-
-                if (pid::mode >= 3) {
-                    pid::mode = 3;
-                }
+                pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
             }
         }
         if (menu_page == 3 && menu_curr_item == 1) {
             lcd.setCursor(0, 0);
             lcd.print("Set Diameter:");
             lcd.setCursor(0, 1);
-            lcd.print(pid::setpoint_float, 2);
+            lcd.print(pid::setpoint_mm(), 2);
             if (encoder::up) {
                 encoder::up = false;
-                pid::setpoint_int--;
+                pid::setSetpoint(pid::setpoint() - 1);
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::setpoint_int++;
+                pid::setSetpoint(pid::setpoint() + 1);
             }
             eeprom::update();
         }
@@ -705,31 +681,24 @@ void drawMenu()
             lcd.setCursor(11, 1);
             lcd.print("  ");
             lcd.setCursor(12, 1);
-            lcd.print(pid::setpoint_float, 2);
+            lcd.print(pid::setpoint_mm(), 2);
             if (encoder::up) {
                 encoder::up = false;
-                pid::setpoint_int--;
+                pid::setSetpoint(pid::setpoint() - 1);
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::setpoint_int++;
+                pid::setSetpoint(pid::setpoint() + 1);
             }
             eeprom::update();
         } else if (menu_page == 2 && menu_curr_item == 3) {
             drawHome();
-            displayString2MenuPage(mode[pid::mode]);
+            displayString2MenuPage(mode[pid::mode()]);
             if (encoder::up) {
                 encoder::up = false;
-                pid::mode--;
-
-                if (pid::mode <= 0) {
-                    pid::mode = 0;
-                }
+                pid::setMode(max(pid::mode() - 1, 0));
             } else if (encoder::down) {
                 encoder::down = false;
-                pid::mode++;
-                if (pid::mode >= 3) {
-                    pid::mode = 3;
-                }
+                pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
             }
         } else if (menu_page == 2 && menu_curr_item == 4) {
             drawHome();
@@ -857,19 +826,19 @@ void displayStringMenuPage(String value)
     lcd.print("Set Mode:");
     lcd.setCursor(0, 1);
     lcd.print(">");
-    if (pid::mode == 0) {
+    if (pid::mode() == 0) {
         lcd.setCursor(1, 1);
         lcd.print("    ");
         lcd.setCursor(5, 1);
-    } else if (pid::mode == 1) {
+    } else if (pid::mode() == 1) {
         lcd.setCursor(1, 1);
         lcd.print(" ");
         lcd.setCursor(3, 1);
-    } else if (pid::mode == 2) {
+    } else if (pid::mode() == 2) {
         lcd.setCursor(1, 1);
         lcd.print("    ");
         lcd.setCursor(5, 1);
-    } else if (pid::mode == 3) {
+    } else if (pid::mode() == 3) {
         lcd.setCursor(1, 1);
         lcd.print(" ");
         lcd.setCursor(3, 1);
@@ -884,19 +853,19 @@ void displayString2MenuPage(String value)
     lcd.setCursor(3, 1);
     lcd.print(" Mode");
 
-    if (pid::mode == 0) {
+    if (pid::mode() == 0) {
         lcd.setCursor(8, 1);
         lcd.print("    ");
         lcd.setCursor(12, 1);
-    } else if (pid::mode == 1) {
+    } else if (pid::mode() == 1) {
         lcd.setCursor(8, 1);
         lcd.print(" ");
         lcd.setCursor(10, 1);
-    } else if (pid::mode == 2) {
+    } else if (pid::mode() == 2) {
         lcd.setCursor(8, 1);
         lcd.print("    ");
         lcd.setCursor(12, 1);
-    } else if (pid::mode == 3) {
+    } else if (pid::mode() == 3) {
         lcd.setCursor(8, 1);
         lcd.print(" ");
         lcd.setCursor(10, 1);
@@ -945,7 +914,7 @@ void displayMenuItem(String item, int position, boolean selected, int value)
         lcd.setCursor(11, position);
         lcd.print("  ");
         lcd.setCursor(12, position);
-        lcd.print(pid::setpoint_float, 2);
+        lcd.print(pid::setpoint_mm(), 2);
     }
 
     if (menu_curr_item == 4) {
