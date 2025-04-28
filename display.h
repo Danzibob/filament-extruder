@@ -53,5 +53,3 @@ void displayIntStringMenuPage(String item, int position, boolean selected, Strin
 void displayMenuItem(String item, int position, boolean selected, int value);
 
 int steps_per_click = 100; // Controls the speed of the Stepper per Rotary click
-
-int entering_mm = 0; // some mm value we're currently entering

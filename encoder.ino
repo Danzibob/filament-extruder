@@ -34,10 +34,6 @@ void read()
         up = true;
     }
     last = val;
-
-    // TODO: this should probably be somewhere else
-    stepper::distrib::last_pos = stepper::distrib::pos;
-    entering_mm = stepper::distrib::pos / steps_per_click;
 }
 
 }

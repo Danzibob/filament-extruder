@@ -43,40 +43,25 @@ void setRpm(float rpm);
 
 
 namespace distrib {
-int new_position = 0;
-int new_position_end = 0;
-
-int step = HIGH;
-int dir = LOW;
-int steps = 0;
-
-unsigned long time;
-unsigned long previous_millis = 0;
-float interval = 0;
-
-// time before we change direction
-unsigned long dir_time;
-unsigned long dir_previous_millis = 0;
-float dir_interval = 50000 / 4; // Moves 4x correct amount
-
-float radius = 0;
-
-int num_steps = 7800 / 4;
-int step_since_dir_change = 0;
-
-int pos = 0;
-int last_pos = 0;
-
-int travel_begin = 0;
-int travel_end = 0;
-float travel_step = 0;
-float travel_speed = 4;
 
 void tick();
 void reset();
 
+float interval();
+void setInterval(float interval);
+
+int pos();
+
+int startPos();
+void setStartPos(int startPos);
+
+int endPos();
+void setEndPos(int endPos);
+
+void goToStart();
+void goToEnd();
+
 }
 
 void init();
-void Var(); // TODO: AAAAAA
 }

@@ -66,7 +66,7 @@ float curr_interval = 0;
 void tick()
 {
     digitalWrite(PIN_SPOOL_DIR, LOW);
-    stepperTick(PIN_SPOOL_STEP, &step, &previous_millis, interval);
+    stepperTick(PIN_SPOOL_STEP, &step, &previous_millis, curr_interval);
 }
 
 float interval() { return curr_interval; }
@@ -78,69 +78,104 @@ void setRpm(float rpm) { setInterval(300 / rpm); }
 }
 
 namespace distrib {
+
+const int MAX_POS = 7900/4;
+
+int step = HIGH;
+int dir = LOW;
+
+unsigned long time;
+unsigned long previous_millis = 0;
+float curr_interval = 0;
+
+int curr_pos = 0; // in steps in HIGH direction
+int pos_start = 0;
+int pos_end = MAX_POS;
+
 void tick() {
-    stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, interval, &step_since_dir_change);
+    stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, curr_interval);
 
-    // Stepper 2 - Distribution Direction
-    if (step_since_dir_change >= 0 && step_since_dir_change <= steps / 2) {
-        dir = LOW;
-    } else if (step_since_dir_change >= steps / 2 && step_since_dir_change <= steps - 1) {
-        dir = HIGH;
+    if (dir)
+        curr_pos++;
+    else
+        curr_pos = max(pos - 1, 0);
+
+    int steps_per_dir_change = (pos_end - pos_start) / 2;
+    if (curr_pos >= pos_end || curr_pos <= pos_start) {
+        dir = !dir;
+        digitalWrite(PIN_DISTRIB_DIR, dir);
     }
-
-    if (step_since_dir_change >= steps) {
-        step_since_dir_change = 0;
-    }
-
-    digitalWrite(PIN_DISTRIB_DIR, dir);
-
 }
 
 void reset()
 {
     digitalWrite(PIN_DISTRIB_DIR, LOW);
-    for (int x = 0; x < num_steps; x++) {
+    for (int x = 0; x < MAX_POS; x++) {
         digitalWrite(PIN_STEPPER_ENABLE, LOW);
         digitalWrite(PIN_DISTRIB_STEP, HIGH);
         delay(1);
         digitalWrite(PIN_DISTRIB_STEP, LOW);
         delay(1);
     }
+
+    // it would be nice to try detect stalls here or something, but not sure if its possible
+
     digitalWrite(PIN_DISTRIB_DIR, HIGH);
+    curr_pos = 0;
 }
+
+float interval() { return curr_interval; }
+void setInterval(float interval) { curr_interval = interval; }
+
+int pos() { return curr_pos; }
+
+int startPos() { return pos_start; }
+void setStartPos(int startPos) {
+    pos_start = startPos;
+}
+
+int endPos() { return pos_end; }
+void setEndPos(int endPos) {
+    pos_end = endPos;
+}
+
+void goToPos(int new_pos) {
+    if (curr_pos == new_pos)
+        return;
+
+    dir = curr_pos < new_pos ? HIGH : LOW;
+    digitalWrite(PIN_DISTRIB_DIR, dir);
+    digitalWrite(PIN_STEPPER_ENABLE, LOW);
+    while (curr_pos != new_pos) {
+        digitalWrite(PIN_DISTRIB_STEP, HIGH);
+        delay(1);
+        digitalWrite(PIN_DISTRIB_STEP, LOW);
+        delay(1);
+        curr_pos += dir ? 1 : -1;
+    }
+
+    dir = !dir;
+}
+
+void goToStart() { goToPos(pos_start); }
+void goToEnd() { goToPos(pos_end); }
 
 }
 
 void init()
 {
-    // Stepper 1 - Puller
     pinMode(PIN_PULLER_STEP, OUTPUT);
     pinMode(PIN_PULLER_DIR, OUTPUT);
-    // Stepper 2 - Distribution
+
     pinMode(PIN_DISTRIB_STEP, OUTPUT);
     pinMode(PIN_DISTRIB_DIR, OUTPUT);
-    // Stepper 3 - Spool
+
     pinMode(PIN_SPOOL_STEP, OUTPUT);
     pinMode(PIN_SPOOL_DIR, OUTPUT);
-    // Stepper enable
+
     pinMode(PIN_STEPPER_ENABLE, OUTPUT);
 
-    // ResetDistr
     distrib::reset();
-}
-
-void Var() {
-    distrib::interval = 160 / distrib::travel_speed;
-
-    if (distrib::travel_speed <= 0) {
-        distrib::travel_speed = 0;
-    }
-    if (distrib::travel_speed >= 160) {
-        distrib::travel_speed = 160;
-    }
-
-    distrib::new_position_end = (7900 / 4) - distrib::new_position;
-    distrib::steps = 2 * distrib::travel_step;
 }
 
 }

@@ -55,7 +55,6 @@ void loop()
         lcd.setCursor(0, 0);
         lcd.print("Resetting...");
         stepper::distrib::reset();
-        stepper::distrib::pos = 0;
         menu_curr_item = 1;
         menu_page = 2;
         lcd.clear();
@@ -75,7 +74,6 @@ void loop()
         break;
     }
 
-    Var();
     fans::set();
 
     if (sensor::width() - sensor::offset() <= 0.10 && menu_curr_item != 1) {
@@ -91,11 +89,3 @@ void loop()
     } else
         digitalWrite(stepper::PIN_STEPPER_ENABLE, LOW);
 }
-// MAIN //
-
-// VARIABILIES //
-void Var()
-{
-    stepper::Var();
-}
-// VARIABILIES //
