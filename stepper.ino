@@ -48,7 +48,7 @@ void setInterval(unsigned long interval) { curr_interval = interval; }
 
 // TODO: not convinced either of these are right
 float speed() { return 60 / ((interval() * 400) / 1000) * 0.062; }
-void setSpeed(float speed) { curr_interval = 1000 * (60 / (speed / 0.062)) / 400; }
+void setSpeed(float speed) { setInterval(1000 * (60 / (speed / 0.062)) / 400); }
 
 float total() { return num_revs * 0.194; }
 void resetCounter() { num_revs = 0; step_in_rev = 0; }
@@ -58,13 +58,22 @@ void resetCounter() { num_revs = 0; step_in_rev = 0; }
 
 namespace spool {
 
+int step = HIGH;
+
+unsigned long previous_millis = 0;
+float curr_interval = 0;
+
 void tick()
 {
-    unsigned long currentMillis = millis();
-    // Stepper 3 - Spool
     digitalWrite(PIN_SPOOL_DIR, LOW);
     stepperTick(PIN_SPOOL_STEP, &step, &previous_millis, interval);
 }
+
+float interval() { return curr_interval; }
+void setInterval(float interval) { curr_interval = interval; }
+
+float rpm() { return 300/interval(); }
+void setRpm(float rpm) { setInterval(300 / rpm); }
 
 }
 
@@ -121,13 +130,6 @@ void init()
 }
 
 void Var() {
-    if (spool::speed <= 2) {
-        spool::speed = 2;
-    } else if (spool::speed >= 30) {
-        spool::speed = 30;
-    }
-    spool::interval = spool::speed;
-    spool::rpm = 300 / spool::speed;
     distrib::interval = 160 / distrib::travel_speed;
 
     if (distrib::travel_speed <= 0) {

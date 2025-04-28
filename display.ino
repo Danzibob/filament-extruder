@@ -171,7 +171,7 @@ void drawMenu()
             }
         } else if (menu_curr_item == 7) {
             drawHome();
-            displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm);
+            displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm());
         } else if (menu_curr_item == 8) {
             drawHome();
             displayMenuItem(str_fan_speed, 1, true, fans::speed);
@@ -216,7 +216,7 @@ void drawMenu()
             }
         } else if (menu_curr_item == 6) {
             drawHome();
-            displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm);
+            displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm());
         } else if (menu_curr_item == 7) {
             drawHome();
             displayMenuItem(str_fan_speed, 1, true, fans::speed);
@@ -483,13 +483,13 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();
-            displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm);
+            displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm());
             if (encoder::up) {
                 encoder::up = false;
-                stepper::spool::speed++;
+                stepper::spool::setRpm(stepper::spool::rpm() + 10);
             } else if (encoder::down) {
                 encoder::down = false;
-                stepper::spool::speed--;
+                stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0));
             }
         } else if (menu_page == 2 && menu_curr_item == 8) {
             drawHome();
@@ -740,13 +740,13 @@ void drawMenu()
             }
         } else if (menu_page == 2 && menu_curr_item == 6) {
             drawHome();
-            displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm);
+            displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm());
             if (encoder::up) {
                 encoder::up = false;
-                stepper::spool::speed++;
+                stepper::spool::setRpm(stepper::spool::rpm() + 10);
             } else if (encoder::down) {
                 encoder::down = false;
-                stepper::spool::speed--;
+                stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0));
             }
         } else if (menu_page == 2 && menu_curr_item == 7) {
             drawHome();

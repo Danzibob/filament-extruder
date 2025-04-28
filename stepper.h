@@ -31,16 +31,14 @@ void resetCounter();
 
 namespace spool {
 
-int step = HIGH;
-
-unsigned long time;
-unsigned long previous_millis = 0;
-float interval = 0;
-
-int speed = 12;
-float rpm = 0;
-
 void tick();
+
+float interval();
+void setInterval(float interval);
+
+float rpm();
+void setRpm(float rpm);
+
 }
 
 
