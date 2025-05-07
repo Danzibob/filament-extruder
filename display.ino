@@ -2,12 +2,85 @@
 
 namespace {
 
+using namespace display;
+
 // LCD
 LiquidCrystal_I2C lcd(0x27, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 unsigned long lastUpdate = 0;
 
 boolean inSetup = true;
+
+enum class Screen {
+    SetupMode,
+    SetupDiam,
+    ShowStats,
+};
+Screen currScreen = Screen::SetupMode;
+
+void redrawStatus()
+{
+    lcd.setCursor(0, 0);
+    if (!stepper::isEnabled()) {
+        lcd.print(strings::spooler_ready);
+    } else {
+        lcd.setCursor(0, 0);
+        lcd.print(char(Logo::Diameter));
+        lcd.print(abs(sensor::width()), 2);
+        lcd.setCursor(5, 0);
+        lcd.print(char(Logo::Speed));
+        lcd.print(char(Logo::MM));
+        lcd.print(stepper::pull::speed(), 2);
+        lcd.print(char(Logo::Metr1));
+        lcd.print(char(Logo::Metr2));
+    }
+}
+
+// Shorthand for the setup screens, which are all pretty similar
+// adjust gets called with either 1 (up) or -1 (down) to set the new value
+// display gets called to return the formatted value
+void redrawSetupScreen(
+    String& prompt,
+    void (*adjust)(int),
+    String (*display)())
+{
+    if (encoder::up || encoder::down) {
+        adjust(encoder::up ? 1 : -1);
+    }
+
+    lcd.setCursor(0, 0);
+    lcd.print(prompt);
+    lcd.setCursor(0, 1);
+    lcd.print(display());
+}
+
+void redrawSetup()
+{
+    if (encoder::clicked) {
+        currScreen = Screen(int(currScreen) + 1);
+    }
+
+    if (currScreen == Screen::SetupMode) {
+        redrawSetupScreen(
+            strings::setup_mode,
+            [](int adj) { pid::setMode(pid::PIDMode(clamp(0, int(pid::mode()) + adj, pid::MAX_MODE))); },
+            []() { return strings::modes[pid::mode()]; });
+    } else if (currScreen == Screen::SetupDiam) {
+        redrawSetupScreen(
+            strings::setup_diameter,
+            [](int adj) { pid::setSetpoint(clamp(0, pid::setpoint() + (adj * 10), 300)); },
+            []() { return String(pid::setpoint_mm(), 2); });
+    } else if (currScreen > Screen::SetupDiam) {
+        inSetup = false;
+        lcd.clear();
+        redrawStatus();
+    }
+}
+
+void redrawMenu()
+{
+    // TODO
+}
 
 }
 
@@ -16,13 +89,13 @@ namespace display {
 void init()
 {
     lcd.begin(16, 2);
-    lcd.createChar(1, display::logos::speed);
-    lcd.createChar(0, display::logos::diameter);
-    lcd.createChar(2, display::logos::mm);
-    lcd.createChar(3, display::logos::metr1);
-    lcd.createChar(4, display::logos::metr2);
-    lcd.createChar(5, display::logos::ex);
-    lcd.createChar(6, display::logos::xt);
+    lcd.createChar(char(Logo::Diameter), logos::diameter);
+    lcd.createChar(char(Logo::Speed), logos::speed);
+    lcd.createChar(char(Logo::MM), logos::mm);
+    lcd.createChar(char(Logo::Metr1), logos::metr1);
+    lcd.createChar(char(Logo::Metr2), logos::metr2);
+    lcd.createChar(char(Logo::Extruder1), logos::extruder1);
+    lcd.createChar(char(Logo::Extruder2), logos::extruder2);
 }
 
 void showSplash()
@@ -30,15 +103,25 @@ void showSplash()
     lcd.setCursor(0, 0);
     lcd.print("Felfil Spooler");
     lcd.setCursor(0, 1);
-    lcd.print("Calibrating 1.4c");
+    lcd.print("Calibrating...");
 }
 
-void loop(boolean forceRedraw)
+void loop(boolean receivedInput)
 {
     // Don't redraw unless enough time has passed, or we've been forced to (by input usually)
     unsigned long currentMillis = millis();
-    if (!forceRedraw && currentMillis - lastUpdate < interval)
+    if (!receivedInput && currentMillis - lastUpdate < interval)
         return;
+
+    // TODO: Hold to reset
+
+    if (!inSetup)
+        redrawStatus();
+
+    if (receivedInput && inSetup)
+        redrawSetup();
+    else if (receivedInput)
+        redrawMenu();
 
     lastUpdate = currentMillis;
 }
@@ -76,41 +159,6 @@ boolean isInSetup()
 //     break;
 // default:
 //     break;
-// }
-// void drawHome()
-// {
-//     // MenuHome
-//     if (stepper::enabled == 0) {
-//         lcd.setCursor(0, 0);
-//         lcd.print(" Spooler ready! ");
-//     } else {
-//         lcd.setCursor(0, 0);
-//         lcd.print(char(0));
-//         lcd.setCursor(5, 0);
-//         lcd.print(char(2));
-//         lcd.setCursor(6, 0);
-//         lcd.print(char(2));
-//         //
-//         lcd.setCursor(7, 0);
-//         lcd.print(" ");
-//         lcd.setCursor(8, 0);
-//         lcd.print(char(1));
-//         lcd.setCursor(13, 0);
-//         lcd.print(" ");
-//         lcd.setCursor(14, 0);
-//         lcd.print(char(3));
-//         lcd.setCursor(15, 0);
-//         lcd.print(char(4));
-
-//         unsigned long currentMillis = millis();
-//         if (currentMillis - lcd_prevMillis >= lcd_interval) {
-//             lcd.setCursor(1, 0);
-//             lcd.print(abs(sensor::width()), 2);
-//             lcd.setCursor(9, 0);
-//             lcd.print(stepper::pull::speed(), 2);
-//             lcd_prevMillis = currentMillis;
-//         }
-//     }
 // }
 
 // void drawMenu()
