@@ -14,9 +14,11 @@ boolean inSetup = true;
 enum class Screen {
     SetupMode,
     SetupDiam,
-    ShowStats,
+    Mode,
+    Stats,
 };
 Screen currScreen = Screen::SetupMode;
+boolean adjusting = false;
 
 void redrawStatus()
 {
@@ -35,6 +37,8 @@ void redrawStatus()
         lcd.print(char(Logo::Metr2));
     }
 }
+
+void redrawMenu();
 
 // Shorthand for the setup screens, which are all pretty similar
 // adjust gets called with either 1 (up) or -1 (down) to set the new value
@@ -74,12 +78,51 @@ void redrawSetup()
         inSetup = false;
         lcd.clear();
         redrawStatus();
+        redrawMenu();
     }
+}
+
+// Shorthand for the setup screens, which are all pretty similar
+// adjust gets called with either 1 (up) or -1 (down) to set the new value
+// display gets called to return the formatted value
+void redrawMenuScreen(
+    String& prefix,
+    String& setPrefix,
+    void (*adjust)(int),
+    String (*display)())
+{
+    if (encoder::clicked)
+        adjusting = !adjusting;
+
+    if (adjusting && (encoder::up || encoder::down)) {
+        adjust(encoder::up ? 1 : -1);
+    }
+
+    lcd.setCursor(0, 1);
+    lcd.print(adjusting ? setPrefix : prefix);
+
+    // Right align displayed value
+    String val = display();
+    lcd.setCursor(16 - val.length(), 1);
+    lcd.print(val);
 }
 
 void redrawMenu()
 {
-    // TODO
+    if (!adjusting && (encoder::up || encoder::down)) {
+        currScreen = Screen(clamp(int(Screen::Mode), int(currScreen) + (encoder::up ? 1 : -1), int(Screen::Stats)));
+    }
+
+    if (currScreen == Screen::Mode) {
+        redrawMenuScreen(
+            strings::mode, strings::set_mode,
+            [](int adj) { pid::setMode(pid::PIDMode(clamp(0, int(pid::mode()) + adj, pid::MAX_MODE))); },
+            []() { return strings::modes[pid::mode()]; });
+    } else if (currScreen == Screen::Stats) {
+        lcd.setCursor(0, 1);
+        lcd.print(strings::stats);
+        lcd.print(String(stepper::pull::total(), 2));
+    }
 }
 
 }

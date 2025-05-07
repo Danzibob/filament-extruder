@@ -23,17 +23,24 @@ unsigned long interval = 100;
 namespace strings {
 
 // clang-format off
-String setup_mode     = "Set mode:       ";
-String setup_diameter = "Set diameter:   ";
-String spooler_ready  = " Spooler ready! ";
-String diam           = " Diameter:";
-String mode           = "     Mode: ";
-String pull_speed     = "  PullSpd: ";
-String offset         = "   Offset:";
-String trav_speed     = "  TravSpd: ";
-String spool_speed    = " SpoolSpd:";
-String fan_speed      = "   FanSpd:";
-String stats          = "   Pulled:";
+String setup_mode      = "Set mode:       ";
+String setup_diameter  = "Set diameter:   ";
+String spooler_ready   = " Spooler ready! ";
+String diam            = "   Diameter:";
+String set_diam        = "SetDiameter:";
+String mode            = "   Mode: ";
+String set_mode        = "SetMode: ";
+String pull_speed      = "   PullSpd: ";
+String set_pull_speed  = "SetPullSpd: ";
+String offset          = "   Offset:";
+String set_offset      = "SetOffset:";
+String trav_speed      = "   TravSpd:";
+String set_trav_speed  = "SetTravSpd:";
+String spool_speed     = "   SplSpd:";
+String set_spool_speed = "SetSpoolSpd:";
+String fan_speed       = "   FanSpd:";
+String set_fan_speed   = "SetFanSpd:";
+String stats           = "Pulled: ";
 // clang-format on
 
 // Must line up with PIDMode
