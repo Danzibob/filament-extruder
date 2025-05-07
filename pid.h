@@ -11,7 +11,7 @@ enum PIDMode {
 
 const int MAX_MODE = Manual;
 
-void Brain();
+void loop();
 
 int setpoint();
 void setSetpoint(int setpoint);

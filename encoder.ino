@@ -20,20 +20,26 @@ void init()
     Timer1.attachInterrupt(interrupt);
 }
 
-void read()
+boolean read()
 {
+    boolean dirty = false;
     btn = inner_encoder->getButton();
-    // TODO: ideally this wouldnt be ored, but something weird is happening which causes
-    // this to be discarded rn
-    middle |= btn == ClickEncoder::Clicked;
+
+    if ((btn == ClickEncoder::Clicked) != clicked)
+        dirty = true;
+    clicked = btn == ClickEncoder::Clicked;
 
     val += inner_encoder->getValue();
     if (val > last) {
+        dirty = true;
         down = true;
     } else if (val < last) {
+        dirty = true;
         up = true;
     }
     last = val;
+
+    return dirty;
 }
 
 }

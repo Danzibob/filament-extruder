@@ -18,13 +18,13 @@ float inp_min = 0; // zero point observed at startup
 
 float lookup(float inval)
 {
-    float out;
     byte i;
     for (i = 1; i < lut_len; i++) {
         if (lut[i][0] > inval) {
             return lut[i - 1][1] + (inval - lut[i - 1][0]) * (lut[i][1] - lut[i - 1][1]) / (lut[i][0] - lut[i - 1][0]);
         }
     }
+    return 0.0; // >.>
 }
 
 float curr_width = 0; // current width reading in mm
@@ -47,7 +47,7 @@ void init() {
     }
 }
 
-void update()
+void loop()
 {
     inp_raw = analogRead(PIN_SENSOR_IN);
     inp += (inp_raw - inp) - inp_min; // smoothing

@@ -1,7 +1,10 @@
 #include "./stepper.h"
 
 namespace {
-void stepperTick(const int pin, int *step, unsigned long *previous_millis, int interval, int *step_in_rev=nullptr) {
+
+bool enabled = false;
+
+void stepperTick(const int pin, int *step, unsigned long *previous_millis, unsigned int interval, int *step_in_rev=nullptr) {
     unsigned long current_millis = millis();
     if (current_millis - *previous_millis >= interval) {
         *previous_millis = current_millis;
@@ -92,7 +95,7 @@ float rpm() {
     return (interval() * STEPS_PER_REV) / (60.0 * 1000.0);
 }
 void setRpm(float rpm) {
-    return (60.0 * 1000.0) / (rpm * STEPS_PER_REV);
+    setInterval((60.0 * 1000.0) / (rpm * STEPS_PER_REV));
 }
 
 }
@@ -118,9 +121,8 @@ void tick() {
     if (dir)
         curr_pos++;
     else
-        curr_pos = max(pos - 1, 0);
+        curr_pos = max(pos() - 1, 0);
 
-    int steps_per_dir_change = (pos_end - pos_start) / 2;
     if (curr_pos >= pos_end || curr_pos <= pos_start) {
         dir = !dir;
         digitalWrite(PIN_DISTRIB_DIR, dir);
@@ -200,6 +202,20 @@ void init()
     pull::setSpeed(1.0);
     spool::setRpm(1.0);
     distrib::reset();
+}
+
+boolean isEnabled() {
+    return enabled;
+}
+
+void enable() {
+    enabled = true;
+    digitalWrite(PIN_STEPPER_ENABLE, LOW);
+}
+
+void disable() {
+    enabled = false;
+    digitalWrite(PIN_STEPPER_ENABLE, HIGH);
 }
 
 }

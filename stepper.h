@@ -12,7 +12,9 @@ const int PIN_SPOOL_DIR = 4;
 const int PIN_SPOOL_STEP = 7;
 
 // Enable
-int enabled = 1;
+boolean isEnabled();
+void enable();
+void disable();
 
 namespace pull {
 

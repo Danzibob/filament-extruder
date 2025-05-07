@@ -3,7 +3,7 @@
 namespace sensor {
 
 void init();
-void update();
+void loop();
 
 // current filament width read by sensor
 float width();
