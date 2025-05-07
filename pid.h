@@ -1,12 +1,15 @@
 #pragma once
 
-#include <PID_v1.h>
 #include "./stepper.h"
+#include <PID_v1.h>
 
 namespace pid {
 
 enum PIDMode {
-    Soft = 0, Medium, Hard, Manual
+    Soft = 0,
+    Medium,
+    Hard,
+    Manual
 };
 
 const int MAX_MODE = Manual;

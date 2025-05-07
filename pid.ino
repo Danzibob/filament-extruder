@@ -15,10 +15,10 @@ struct PIDDetails {
 
 namespace modes {
 
-PIDDetails soft = {6.9, 0.23, 5.175};
-PIDDetails medium = {10.8, 0.45, 6.48};
-PIDDetails hard = {15.48, 0.62, 9.675};
-PIDDetails hard2 = {0.1548, 0.0062, 0.9675};
+PIDDetails soft = { 6.9, 0.23, 5.175 };
+PIDDetails medium = { 10.8, 0.45, 6.48 };
+PIDDetails hard = { 15.48, 0.62, 9.675 };
+PIDDetails hard2 = { 0.1548, 0.0062, 0.9675 };
 
 }
 
@@ -47,7 +47,7 @@ void loop()
     }
 
     // get tuning parameters to use
-    PIDDetails *mode_tuning;
+    PIDDetails* mode_tuning;
     switch (curr_mode) {
     case Soft:
         mode_tuning = &modes::soft;
@@ -57,8 +57,7 @@ void loop()
         mode_tuning = &modes::medium;
         break;
 
-    case Hard:
-    {
+    case Hard: {
         double gap = abs(curr_setpoint - input); // distance away from setpoint
         if (gap >= 0.06)
             mode_tuning = &modes::hard;
@@ -72,7 +71,6 @@ void loop()
         setMode(Soft);
         mode_tuning = &modes::soft;
     };
-
 
     // get pid output
     inner_pid.SetTunings(mode_tuning->kp, mode_tuning->ki, mode_tuning->kd);
@@ -88,13 +86,15 @@ void loop()
 }
 
 int setpoint() { return int(curr_setpoint * 100.0); }
-void setSetpoint(int setpoint) {
+void setSetpoint(int setpoint)
+{
     curr_setpoint = setpoint * 0.01;
 }
 double setpoint_mm() { return curr_setpoint; }
 
 PIDMode mode() { return curr_mode; };
-void setMode(PIDMode mode) {
+void setMode(PIDMode mode)
+{
     curr_mode = mode;
     // TODO: set tunings here?
 };

@@ -1,5 +1,5 @@
-#include "eeprom.h"
 #include "display.h"
+#include "eeprom.h"
 #include "encoder.h"
 #include "fans.h"
 #include "pid.h"
@@ -16,7 +16,6 @@ void setup()
     stepper::init();
     encoder::init();
 }
-
 
 void loop()
 {

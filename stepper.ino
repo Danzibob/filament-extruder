@@ -4,7 +4,8 @@ namespace {
 
 bool enabled = false;
 
-void stepperTick(const int pin, int *step, unsigned long *previous_millis, unsigned int interval, int *step_in_rev=nullptr) {
+void stepperTick(const int pin, int* step, unsigned long* previous_millis, unsigned int interval, int* step_in_rev = nullptr)
+{
     unsigned long current_millis = millis();
     if (current_millis - *previous_millis >= interval) {
         *previous_millis = current_millis;
@@ -50,7 +51,8 @@ unsigned long interval() { return curr_interval; }
 void setInterval(unsigned long interval) { curr_interval = interval; }
 
 // mm / sec
-float speed() {
+float speed()
+{
     float revs_per_sec = (1000.0 / float(interval())) / float(STEPS_PER_REV);
     float speed = float(MM_PER_REV) * revs_per_sec;
     if (!isfinite(speed)) {
@@ -59,7 +61,8 @@ float speed() {
     }
     return speed;
 }
-void setSpeed(float speed) {
+void setSpeed(float speed)
+{
     float revs_per_sec = speed / float(MM_PER_REV);
     float steps_per_sec = revs_per_sec * float(STEPS_PER_REV);
     float new_interval = 1000.0 / steps_per_sec;
@@ -68,10 +71,13 @@ void setSpeed(float speed) {
 }
 
 float total() { return num_revs * MM_PER_REV; }
-void resetCounter() { num_revs = 0; step_in_rev = 0; }
-
+void resetCounter()
+{
+    num_revs = 0;
+    step_in_rev = 0;
 }
 
+}
 
 namespace spool {
 
@@ -91,10 +97,12 @@ void tick()
 float interval() { return curr_interval; }
 void setInterval(float interval) { curr_interval = interval; }
 
-float rpm() {
+float rpm()
+{
     return (interval() * STEPS_PER_REV) / (60.0 * 1000.0);
 }
-void setRpm(float rpm) {
+void setRpm(float rpm)
+{
     setInterval((60.0 * 1000.0) / (rpm * STEPS_PER_REV));
 }
 
@@ -102,7 +110,7 @@ void setRpm(float rpm) {
 
 namespace distrib {
 
-const int MAX_POS = 7900/4;
+const int MAX_POS = 7900 / 4;
 
 int step = HIGH;
 int dir = LOW;
@@ -115,7 +123,8 @@ int curr_pos = 0; // in steps in HIGH direction
 int pos_start = 0;
 int pos_end = MAX_POS;
 
-void tick() {
+void tick()
+{
     stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, curr_interval);
 
     if (dir)
@@ -152,16 +161,19 @@ void setInterval(float interval) { curr_interval = interval; }
 int pos() { return curr_pos; }
 
 int startPos() { return pos_start; }
-void setStartPos(int startPos) {
+void setStartPos(int startPos)
+{
     pos_start = startPos;
 }
 
 int endPos() { return pos_end; }
-void setEndPos(int endPos) {
+void setEndPos(int endPos)
+{
     pos_end = endPos;
 }
 
-void goToPos(int new_pos) {
+void goToPos(int new_pos)
+{
     if (curr_pos == new_pos)
         return;
 
@@ -204,16 +216,19 @@ void init()
     distrib::reset();
 }
 
-boolean isEnabled() {
+boolean isEnabled()
+{
     return enabled;
 }
 
-void enable() {
+void enable()
+{
     enabled = true;
     digitalWrite(PIN_STEPPER_ENABLE, LOW);
 }
 
-void disable() {
+void disable()
+{
     enabled = false;
     digitalWrite(PIN_STEPPER_ENABLE, HIGH);
 }

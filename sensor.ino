@@ -34,7 +34,8 @@ int curr_offset = 0;
 
 namespace sensor {
 
-void init() {
+void init()
+{
     pinMode(PIN_SENSOR_IN, INPUT);
 
     // take a second to calibrate
@@ -54,12 +55,12 @@ void loop()
     curr_width = abs(lookup(inp)) + offset_mm();
 }
 
-
 float width() { return curr_width; }
 
 int offset() { return curr_offset; }
 float offset_mm() { return curr_offset * 0.01; }
-void setOffset(int newOffset) {
+void setOffset(int newOffset)
+{
     if (newOffset <= -25) {
         newOffset = -25;
     } else if (newOffset >= 25) {

@@ -8,7 +8,7 @@ setup:
 	find libraries -type f -exec arduino-cli lib install --zip-path {} \;
 
 format:
-	find -iname '*.h' -o -iname '*.ino' | xargs clang-format -i --style=webkit
+	find -iname '*.h' -o -iname '*.ino' | xargs clang-format -i
 
 build:
 # it would be desirable to use --build-property compiler.cpp.extra_flags=-Werror, but our libraries have warnings so this breaks things

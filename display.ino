@@ -13,8 +13,8 @@ boolean inSetup = true;
 
 namespace display {
 
-
-void init() {
+void init()
+{
     lcd.begin(16, 2);
     lcd.createChar(1, display::logos::speed);
     lcd.createChar(0, display::logos::diameter);
@@ -25,14 +25,16 @@ void init() {
     lcd.createChar(6, display::logos::xt);
 }
 
-void showSplash() {
+void showSplash()
+{
     lcd.setCursor(0, 0);
     lcd.print("Felfil Spooler");
     lcd.setCursor(0, 1);
     lcd.print("Calibrating 1.4c");
 }
 
-void loop(boolean forceRedraw) {
+void loop(boolean forceRedraw)
+{
     // Don't redraw unless enough time has passed, or we've been forced to (by input usually)
     unsigned long currentMillis = millis();
     if (!forceRedraw && currentMillis - lastUpdate < interval)
@@ -41,39 +43,40 @@ void loop(boolean forceRedraw) {
     lastUpdate = currentMillis;
 }
 
-boolean isInSetup() {
+boolean isInSetup()
+{
     return inSetup;
 }
 
 }
 
-    // switch (encoder::btn) {
-    // case ClickEncoder::Clicked:
-    //     lcd.clear();
-    //     break;
-    // case ClickEncoder::Held:
-    //     lcd.clear();
-    //     lcd.setCursor(0, 0);
-    //     lcd.print("Resetting...");
-    //     stepper::distrib::reset();
-    //     menu_curr_item = 1;
-    //     menu_page = 2;
-    //     lcd.clear();
-    //     break;
-    // case ClickEncoder::DoubleClicked:
-    //     if (pid::mode < 3) {
-    //         if (menu_page == 2 && menu_curr_item == 8) {
-    //             stepper::pull::resetCounter();
-    //         }
-    //     } else if (pid::mode == 3) {
-    //         if (menu_page == 2 && menu_curr_item == 9) {
-    //             stepper::pull::resetCounter();
-    //         }
-    //     }
-    //     break;
-    // default:
-    //     break;
-    // }
+// switch (encoder::btn) {
+// case ClickEncoder::Clicked:
+//     lcd.clear();
+//     break;
+// case ClickEncoder::Held:
+//     lcd.clear();
+//     lcd.setCursor(0, 0);
+//     lcd.print("Resetting...");
+//     stepper::distrib::reset();
+//     menu_curr_item = 1;
+//     menu_page = 2;
+//     lcd.clear();
+//     break;
+// case ClickEncoder::DoubleClicked:
+//     if (pid::mode < 3) {
+//         if (menu_page == 2 && menu_curr_item == 8) {
+//             stepper::pull::resetCounter();
+//         }
+//     } else if (pid::mode == 3) {
+//         if (menu_page == 2 && menu_curr_item == 9) {
+//             stepper::pull::resetCounter();
+//         }
+//     }
+//     break;
+// default:
+//     break;
+// }
 // void drawHome()
 // {
 //     // MenuHome

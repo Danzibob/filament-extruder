@@ -1,7 +1,8 @@
 #include "eeprom.h"
 
 namespace eeprom {
-void load() {
+void load()
+{
     sensor::setOffset(EEPROM.read(addr_offset));
 
     // EEPROM
@@ -14,7 +15,8 @@ void load() {
     pid::setSetpoint(setpoint_int);
 }
 
-void update() {
+void update()
+{
     EEPROM.update(addr_setpoint, highByte(pid::setpoint()));
     EEPROM.update(addr_setpoint + 1, lowByte(pid::setpoint()));
     EEPROM.update(addr_offset, sensor::offset());

@@ -43,7 +43,6 @@ void setRpm(float rpm);
 
 }
 
-
 namespace distrib {
 
 void tick();

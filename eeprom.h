@@ -1,8 +1,8 @@
 #pragma once
 
-#include <EEPROM.h>
-#include "sensor.h"
 #include "pid.h"
+#include "sensor.h"
+#include <EEPROM.h>
 
 namespace eeprom {
 
