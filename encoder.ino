@@ -14,7 +14,7 @@ namespace encoder {
 
 void init()
 {
-    // last = -1;
+    last = 0;
     inner_encoder = new ClickEncoder(A2, A1, A3);
     Timer1.initialize(1000);
     Timer1.attachInterrupt(interrupt);
@@ -30,13 +30,10 @@ boolean read()
     clicked = btn == ClickEncoder::Clicked;
 
     val += inner_encoder->getValue();
-    if (val > last) {
+    down = val < last;
+    up = val > last;
+    if (val != last)
         dirty = true;
-        down = true;
-    } else if (val < last) {
-        dirty = true;
-        up = true;
-    }
     last = val;
 
     return dirty;

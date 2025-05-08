@@ -4,7 +4,7 @@ namespace {
 
 bool enabled = false;
 
-void stepperTick(const int pin, int* step, unsigned long* previous_millis, unsigned int interval, int* step_in_rev = nullptr)
+boolean stepperTick(const int pin, int* step, unsigned long* previous_millis, unsigned int interval, int* step_in_rev = nullptr)
 {
     unsigned long current_millis = millis();
     if (current_millis - *previous_millis >= interval) {
@@ -18,7 +18,9 @@ void stepperTick(const int pin, int* step, unsigned long* previous_millis, unsig
             *step = LOW;
         // set the LED with the ledState of the variable:
         digitalWrite(pin, *step);
+        return true;
     }
+    return false;
 }
 
 }
@@ -86,7 +88,7 @@ const int STEPS_PER_REV = 300;
 int step = HIGH;
 
 unsigned long previous_millis = 0;
-float curr_interval = 0;
+unsigned long curr_interval = 0;
 
 void tick()
 {
@@ -94,8 +96,8 @@ void tick()
     stepperTick(PIN_SPOOL_STEP, &step, &previous_millis, curr_interval);
 }
 
-float interval() { return curr_interval; }
-void setInterval(float interval) { curr_interval = interval; }
+unsigned long interval() { return curr_interval; }
+void setInterval(unsigned long interval) { curr_interval = interval; }
 
 float rpm()
 {
@@ -110,14 +112,11 @@ void setRpm(float rpm)
 
 namespace distrib {
 
-const int MAX_POS = 7900 / 4;
-
-int step = HIGH;
+int step = LOW;
 int dir = LOW;
 
-unsigned long time;
 unsigned long previous_millis = 0;
-float curr_interval = 0;
+unsigned long curr_interval = 0;
 
 int curr_pos = 0; // in steps in HIGH direction
 int pos_start = 0;
@@ -125,24 +124,23 @@ int pos_end = MAX_POS;
 
 void tick()
 {
-    stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, curr_interval);
-
-    if (dir)
-        curr_pos++;
-    else
-        curr_pos = max(pos() - 1, 0);
-
-    if (curr_pos >= pos_end || curr_pos <= pos_start) {
-        dir = !dir;
-        digitalWrite(PIN_DISTRIB_DIR, dir);
+    if (curr_pos >= pos_end) {
+        dir = LOW;
+    } else if (curr_pos <= pos_start) {
+        dir = HIGH;
     }
+    digitalWrite(PIN_DISTRIB_DIR, dir);
+
+    if (stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, curr_interval) && step == LOW)
+        curr_pos = clamp(0, curr_pos + (dir == HIGH ? 1 : -1), MAX_POS);
 }
 
 void reset()
 {
-    digitalWrite(PIN_DISTRIB_DIR, LOW);
+    dir = LOW;
+    digitalWrite(PIN_DISTRIB_DIR, dir);
+    digitalWrite(PIN_STEPPER_ENABLE, LOW);
     for (int x = 0; x < MAX_POS; x++) {
-        digitalWrite(PIN_STEPPER_ENABLE, LOW);
         digitalWrite(PIN_DISTRIB_STEP, HIGH);
         delay(1);
         digitalWrite(PIN_DISTRIB_STEP, LOW);
@@ -150,13 +148,11 @@ void reset()
     }
 
     // it would be nice to try detect stalls here or something, but not sure if its possible
-
-    digitalWrite(PIN_DISTRIB_DIR, HIGH);
     curr_pos = 0;
 }
 
-float interval() { return curr_interval; }
-void setInterval(float interval) { curr_interval = interval; }
+unsigned long interval() { return curr_interval; }
+void setInterval(unsigned long interval) { curr_interval = interval; }
 
 int pos() { return curr_pos; }
 
@@ -177,7 +173,7 @@ void goToPos(int new_pos)
     if (curr_pos == new_pos)
         return;
 
-    dir = curr_pos < new_pos ? HIGH : LOW;
+    dir = new_pos > curr_pos ? HIGH : LOW;
     digitalWrite(PIN_DISTRIB_DIR, dir);
     digitalWrite(PIN_STEPPER_ENABLE, LOW);
     while (curr_pos != new_pos) {
@@ -187,9 +183,6 @@ void goToPos(int new_pos)
         delay(1);
         curr_pos += dir ? 1 : -1;
     }
-
-    dir = !dir;
-    digitalWrite(PIN_DISTRIB_DIR, dir);
 }
 
 void goToStart() { goToPos(pos_start); }
@@ -211,8 +204,9 @@ void init()
     pinMode(PIN_STEPPER_ENABLE, OUTPUT);
 
     // TODO: find better default values probably
-    pull::setSpeed(1.0);
-    spool::setRpm(1.0);
+    pull::setInterval(100);
+    spool::setInterval(100);
+    distrib::setInterval(100);
     distrib::reset();
 }
 

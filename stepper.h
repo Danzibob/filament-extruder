@@ -1,5 +1,7 @@
 #pragma once
 
+#define clamp(lo, val, hi) min(hi, max(lo, val))
+
 namespace stepper {
 
 // Pins
@@ -35,8 +37,8 @@ namespace spool {
 
 void tick();
 
-float interval();
-void setInterval(float interval);
+unsigned long interval();
+void setInterval(unsigned long interval);
 
 float rpm();
 void setRpm(float rpm);
@@ -45,11 +47,13 @@ void setRpm(float rpm);
 
 namespace distrib {
 
+const int MAX_POS = 1900;
+
 void tick();
 void reset();
 
-float interval();
-void setInterval(float interval);
+unsigned long interval();
+void setInterval(unsigned long interval);
 
 int pos();
 

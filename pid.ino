@@ -2,7 +2,8 @@
 
 namespace {
 
-double curr_setpoint, input, output;
+int curr_setpoint_int = 175;
+double curr_setpoint = 1.75, input, output;
 float last_output = 0;
 
 pid::PIDMode curr_mode;
@@ -85,9 +86,10 @@ void loop()
     stepper::spool::tick();
 }
 
-int setpoint() { return int(curr_setpoint * 100.0); }
+int setpoint() { return curr_setpoint_int; }
 void setSetpoint(int setpoint)
 {
+    curr_setpoint_int = setpoint;
     curr_setpoint = setpoint * 0.01;
 }
 double setpoint_mm() { return curr_setpoint; }

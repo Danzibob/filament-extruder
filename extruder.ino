@@ -1,7 +1,6 @@
 #include "display.h"
 #include "eeprom.h"
 #include "encoder.h"
-#include "fans.h"
 #include "pid.h"
 #include "sensor.h"
 #include "stepper.h"
@@ -15,6 +14,9 @@ void setup()
     sensor::init();
     stepper::init();
     encoder::init();
+
+    display::clear();
+    display::loop(true);
 }
 
 void loop()
@@ -25,7 +27,6 @@ void loop()
 
     // Update things
     display::loop(mustUpdate);
-    fans::set(); // TODO: only do on change? cant see where its changed lol
     if (stepper::isEnabled()) {
         pid::loop();
     } else if (!display::isInSetup() && sensor::width() - sensor::offset() >= 0.10) {

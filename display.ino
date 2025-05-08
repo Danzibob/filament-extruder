@@ -14,11 +14,23 @@ boolean inSetup = true;
 enum class Screen {
     SetupMode,
     SetupDiam,
-    Mode,
+    SetupSpoolStart,
+    SetupSpoolEnd,
     Stats,
+    Mode,
+    WidthOffset,
+    PullSpeed,
+    DistribSpeed,
+    SpoolSpeed
 };
 Screen currScreen = Screen::SetupMode;
 boolean adjusting = false;
+
+void clearLine(int l)
+{
+    lcd.setCursor(0, l);
+    lcd.print("                ");
+}
 
 void redrawStatus()
 {
@@ -27,14 +39,26 @@ void redrawStatus()
         lcd.print(strings::spooler_ready);
     } else {
         lcd.setCursor(0, 0);
+        int col = 0;
+
         lcd.print(char(Logo::Diameter));
-        lcd.print(abs(sensor::width()), 2);
-        lcd.setCursor(5, 0);
+        col++;
+        String val = String(abs(sensor::width()), 2);
+        lcd.print(val);
+        col += val.length();
+
+        lcd.print(" ");
         lcd.print(char(Logo::Speed));
+        col += 2;
+        val = String(stepper::pull::speed(), 2);
+        lcd.print(val);
+        col += val.length();
+
         lcd.print(char(Logo::MM));
-        lcd.print(stepper::pull::speed(), 2);
-        lcd.print(char(Logo::Metr1));
-        lcd.print(char(Logo::Metr2));
+        col++;
+
+        for (; col < 16; col++)
+            lcd.print(" ");
     }
 }
 
@@ -50,6 +74,7 @@ void redrawSetupScreen(
 {
     if (encoder::up || encoder::down) {
         adjust(encoder::up ? 1 : -1);
+        clearLine(1);
     }
 
     lcd.setCursor(0, 0);
@@ -60,8 +85,12 @@ void redrawSetupScreen(
 
 void redrawSetup()
 {
+    bool firstRedrawOnScreen = false;
     if (encoder::clicked) {
         currScreen = Screen(int(currScreen) + 1);
+        encoder::clicked = false;
+        firstRedrawOnScreen = true;
+        lcd.clear();
     }
 
     if (currScreen == Screen::SetupMode) {
@@ -70,11 +99,38 @@ void redrawSetup()
             [](int adj) { pid::setMode(pid::PIDMode(clamp(0, int(pid::mode()) + adj, pid::MAX_MODE))); },
             []() { return strings::modes[pid::mode()]; });
     } else if (currScreen == Screen::SetupDiam) {
+        if (firstRedrawOnScreen)
+            pid::setSetpoint(175);
+
         redrawSetupScreen(
             strings::setup_diameter,
-            [](int adj) { pid::setSetpoint(clamp(0, pid::setpoint() + (adj * 10), 300)); },
+            [](int adj) { pid::setSetpoint(clamp(0, pid::setpoint() + (adj * MM_PER_CLICK), 300)); },
             []() { return String(pid::setpoint_mm(), 2); });
-    } else if (currScreen > Screen::SetupDiam) {
+    } else if (currScreen == Screen::SetupSpoolStart) {
+        using namespace stepper;
+
+        if (firstRedrawOnScreen) {
+            distrib::setStartPos(0);
+            distrib::goToStart();
+        }
+
+        redrawSetupScreen(
+            strings::setup_distrib_start,
+            [](int adj) { distrib::setStartPos(clamp(0, distrib::startPos() + (adj * STEPS_PER_CLICK), distrib::MAX_POS)); distrib::goToStart(); },
+            []() { return String(distrib::startPos()); });
+    } else if (currScreen == Screen::SetupSpoolEnd) {
+        using namespace stepper;
+
+        if (firstRedrawOnScreen) {
+            distrib::setEndPos(distrib::MAX_POS);
+            distrib::goToEnd();
+        }
+
+        redrawSetupScreen(
+            strings::setup_distrib_end,
+            [](int adj) { distrib::setEndPos(clamp(distrib::startPos(), distrib::endPos() + (adj * STEPS_PER_CLICK), distrib::MAX_POS)); distrib::goToEnd(); },
+            []() { return String(distrib::endPos()); });
+    } else if (currScreen > Screen::SetupSpoolEnd) {
         inSetup = false;
         lcd.clear();
         redrawStatus();
@@ -89,13 +145,17 @@ void redrawMenuScreen(
     String& prefix,
     String& setPrefix,
     void (*adjust)(int),
-    String (*display)())
+    String (*display)(),
+    boolean readOnly = false)
 {
-    if (encoder::clicked)
+    if (encoder::clicked && !readOnly) {
         adjusting = !adjusting;
+        encoder::clicked = false;
+    }
 
     if (adjusting && (encoder::up || encoder::down)) {
         adjust(encoder::up ? 1 : -1);
+        clearLine(1);
     }
 
     lcd.setCursor(0, 1);
@@ -110,18 +170,49 @@ void redrawMenuScreen(
 void redrawMenu()
 {
     if (!adjusting && (encoder::up || encoder::down)) {
-        currScreen = Screen(clamp(int(Screen::Mode), int(currScreen) + (encoder::up ? 1 : -1), int(Screen::Stats)));
+        currScreen = Screen(clamp(int(Screen::Stats), int(currScreen) + (encoder::up ? 1 : -1), int(Screen::SpoolSpeed)));
+        clearLine(1);
     }
 
-    if (currScreen == Screen::Mode) {
+    if (currScreen == Screen::Stats) {
+        redrawMenuScreen(
+            strings::stats, strings::stats,
+            [](int) {},
+            []() { return String(stepper::pull::total(), 2); },
+            true);
+    } else if (currScreen == Screen::Mode) {
         redrawMenuScreen(
             strings::mode, strings::set_mode,
             [](int adj) { pid::setMode(pid::PIDMode(clamp(0, int(pid::mode()) + adj, pid::MAX_MODE))); },
             []() { return strings::modes[pid::mode()]; });
-    } else if (currScreen == Screen::Stats) {
-        lcd.setCursor(0, 1);
-        lcd.print(strings::stats);
-        lcd.print(String(stepper::pull::total(), 2));
+    } else if (currScreen == Screen::WidthOffset) {
+        redrawMenuScreen(
+            strings::width_offset, strings::set_width_offset,
+            [](int adj) { sensor::setOffset(clamp(0, sensor::offset() + adj, 100)); },
+            []() { return String(sensor::offset_mm(), 2); });
+
+    } else if (currScreen == Screen::PullSpeed) {
+        using namespace stepper;
+
+        redrawMenuScreen(
+            strings::pull_speed, strings::set_pull_speed,
+            [](int adj) { pull::setInterval(clamp(10, pull::interval() + adj, 1000)); },
+            []() { return String(pull::interval()); },
+            pid::mode() != pid::PIDMode::Manual);
+    } else if (currScreen == Screen::DistribSpeed) {
+        using namespace stepper;
+
+        redrawMenuScreen(
+            strings::distrib_speed, strings::set_distrib_speed,
+            [](int adj) { distrib::setInterval(clamp(10, distrib::interval() + adj, 1000)); },
+            []() { return String(distrib::interval()); });
+    } else if (currScreen == Screen::SpoolSpeed) {
+        using namespace stepper;
+
+        redrawMenuScreen(
+            strings::spool_speed, strings::set_spool_speed,
+            [](int adj) { spool::setInterval(clamp(10, spool::interval() + adj, 1000)); },
+            []() { return String(spool::interval()); });
     }
 }
 
@@ -149,6 +240,11 @@ void showSplash()
     lcd.print("Calibrating...");
 }
 
+void clear()
+{
+    lcd.clear();
+}
+
 void loop(boolean receivedInput)
 {
     // Don't redraw unless enough time has passed, or we've been forced to (by input usually)
@@ -158,13 +254,13 @@ void loop(boolean receivedInput)
 
     // TODO: Hold to reset
 
-    if (!inSetup)
-        redrawStatus();
-
-    if (receivedInput && inSetup)
+    if (inSetup) {
         redrawSetup();
-    else if (receivedInput)
-        redrawMenu();
+    } else {
+        redrawStatus();
+        if (receivedInput)
+            redrawMenu();
+    }
 
     lastUpdate = currentMillis;
 }
@@ -202,684 +298,4 @@ boolean isInSetup()
 //     break;
 // default:
 //     break;
-// }
-
-// void drawMenu()
-// {
-//     // MENU UI Start
-//     if (menu_curr_item == 2 && menu_page == 1) {
-//         encoder::up = false;
-//     }
-//     if (encoder::up && menu_page == 1) {
-
-//         encoder::up = false;
-//         menu_last_item = menu_curr_item;
-//         menu_curr_item--;
-//         if (menu_curr_item == 0) {
-//             menu_curr_item = 1;
-//         }
-//     }
-//     if (encoder::down && menu_page == 1) // We have turned the Rotary Encoder Clockwise
-//     {
-//         encoder::down = false;
-//         menu_last_item = menu_curr_item;
-//         menu_curr_item++;
-//         if (menu_curr_item == 10 && pid::mode() == 3) {
-//             menu_curr_item--;
-//         } else if (menu_curr_item == 9 && pid::mode() != 3) {
-//             menu_curr_item--;
-//         }
-//     }
-//     // SETUP MENU
-//     // Begin____________________________________________________________________
-//     if (menu_page == 1 && menu_curr_item == 1) {
-//         menu_page = 2;
-//     }
-//     if (encoder::middle && menu_curr_item == 1) // Middle Button is Pressed - SETUP MENU
-//     {
-//         encoder::middle = false;
-
-//         if (menu_page == 1) {
-
-//             menu_page = 2;
-//         } else if (menu_page == 2) {
-//             menu_page = 3;
-//         } else if (menu_page == 3) {
-//             menu_page = 4;
-//         } else if (menu_page == 4) {
-//             using namespace stepper::distrib;
-
-//             setStartPos(pos());
-
-//             lcd.setCursor(0, 0);
-//             lcd.print("Wait while I'm");
-//             lcd.setCursor(0, 1);
-//             lcd.print("moving stepper");
-
-//             setEndPos(7900 / 4);
-//             goToEnd();
-
-//             lcd.clear();
-//             menu_page = 5;
-//         } else if (menu_page == 5) {
-//             using namespace stepper::distrib;
-
-//             setEndPos(pos());
-//             if (pid::mode() <= 2) {
-//                 menu_curr_item = 2;
-//                 menu_page = 1;
-//             } else
-//                 (menu_page = 6);
-//         } else if (menu_page == 6) {
-//             menu_curr_item = 2;
-//             menu_page = 1;
-//         }
-//     }
-//     // SETUP MENU
-//     // End_______________________________________________________________________
-
-//     if (encoder::middle && menu_curr_item >= 2) // Middle Button is Pressed - USING MENU
-//     {
-//         encoder::middle = false;
-//         if (menu_page == 1) {
-//             menu_page = 2;
-//         } else if (menu_page == 2) {
-//             menu_page = 1;
-//         }
-//     }
-//     // MENU UI END
-
-//     // Menu using structure begin
-//     if (menu_page == 1 && menu_curr_item >= 2 && pid::mode() == 3) {
-//         if (menu_curr_item == 2) {
-//             drawHome();
-//             displayMenuItem(str_diam, 1, true, pid::setpoint_mm());
-//         } else if (menu_curr_item == 3) {
-//             drawHome();
-//             displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode()]);
-//         } else if (menu_curr_item == 4) {
-
-//             drawHome();
-
-//             lcd.setCursor(0, 1);
-//             lcd.print(">  PullSpd: "); // TODO
-//             lcd.setCursor(12, 1);
-//             lcd.print(stepper::pull::speed());
-//         } else if (menu_curr_item == 5) {
-//             drawHome();
-//             displayMenuItem(str_offset, 1, true, sensor::offset_mm());
-//         } else if (menu_curr_item == 6) {
-//             using namespace stepper::distrib;
-
-//             drawHome();
-//             lcd.setCursor(0, 1);
-//             lcd.print(">  TravInt: ");
-//             lcd.setCursor(12, 1);
-//             lcd.print(interval());
-//         } else if (menu_curr_item == 7) {
-//             drawHome();
-//             displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm());
-//         } else if (menu_curr_item == 8) {
-//             drawHome();
-//             displayMenuItem(str_fan_speed, 1, true, fans::speed);
-//         } else if (menu_curr_item == 9) {
-//             drawHome();
-//             displayMenuItem(str_stats, 1, true, stepper::pull::total());
-//         }
-//     } else if (menu_page == 1 && menu_curr_item >= 2 && pid::mode() != 3) {
-//         if (menu_curr_item == 2) {
-//             drawHome();
-//             displayMenuItem(str_diam, 1, true, pid::setpoint_mm());
-//         } else if (menu_curr_item == 3) {
-//             drawHome();
-//             displayIntStringMenuPage(str_mode, 1, true, mode[pid::mode()]);
-//         } else if (menu_curr_item == 4) {
-
-//             drawHome();
-//             displayMenuItem(str_offset, 1, true, sensor::offset_mm());
-//         } else if (menu_curr_item == 5) {
-//             using namespace stepper::distrib;
-//             drawHome();
-//             lcd.setCursor(0, 1);
-//             lcd.print(">  TravInt: ");
-//             lcd.setCursor(12, 1);
-//             lcd.print(interval());
-//         } else if (menu_curr_item == 6) {
-//             drawHome();
-//             displayMenuItem(str_spool_speed, 1, true, stepper::spool::rpm());
-//         } else if (menu_curr_item == 7) {
-//             drawHome();
-//             displayMenuItem(str_fan_speed, 1, true, fans::speed);
-//         } else if (menu_curr_item == 8) {
-//             drawHome();
-//             displayMenuItem(str_stats, 1, true, stepper::pull::total());
-//         }
-//     }
-//     // Menu using structure end
-
-//     if (pid::mode() == 3) {
-
-//         // Manual Mode Setting
-//         // Begin___________________________________________________________
-//         if (menu_page == 2 && menu_curr_item == 1) {
-//             // digitalWrite (enablePin, HIGH);
-//           displayStringMenuPage(mode[pid::mode()]);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setMode(max(pid::mode() - 1, 0));
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
-//             }
-//         }
-//         if (menu_page == 3 && menu_curr_item == 1) {
-//             // digitalWrite (enablePin, HIGH);
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set Diameter:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(pid::setpoint_mm(), 2);
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setSetpoint(pid::setpoint() - 1);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setSetpoint(pid::setpoint() + 1);
-//             }
-//             eeprom::update();
-//         }
-//         //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//         if (menu_page == 4 && menu_curr_item == 1) {
-//             using namespace stepper::distrib;
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set Spool Begin:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(startPos() / steps_per_click);
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setStartPos(startPos() - steps_per_click);
-//                 goToStart();
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setStartPos(startPos() + steps_per_click);
-//                 goToStart();
-//             }
-//         }
-//         //////////////////////////////////////////////////////////
-//         if (menu_page == 5 && menu_curr_item == 1) {
-//             using namespace stepper::distrib;
-
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set Spool End:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(endPos() / steps_per_click);
-
-//             using namespace stepper::distrib;
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setEndPos(endPos() - steps_per_click);
-//                 goToEnd();
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setEndPos(endPos() + steps_per_click);
-//                 goToEnd();
-//             }
-//         }
-//         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//         if (menu_page == 6 && menu_curr_item == 1) {
-//             using namespace stepper::pull;
-
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set PullSpd:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(speed(), 2);
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setSpeed(speed() + 0.10);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setSpeed(max(speed() - 0.10, 0.1));
-//             }
-//         }
-//         // Manual Mode Setting
-//         // End_______________________________________________________________
-
-//         if (menu_page == 2 && menu_curr_item == 2) {
-//             drawHome();
-//             displayIntMenuPage(str_diam, 1, pid::setpoint_mm());
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setSetpoint(pid::setpoint() - 1);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setSetpoint(pid::setpoint() + 1);
-//             }
-//             eeprom::update();
-//         } else if (menu_page == 2 && menu_curr_item == 3) {
-//             drawHome();
-//             displayString2MenuPage(mode[pid::mode()]);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setMode(max(pid::mode() - 1, 0));
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 4) {
-//             using namespace stepper::pull;
-//             drawHome();
-//             lcd.setCursor(0, 1);
-//             lcd.print("Set");
-//             lcd.setCursor(3, 1);
-//             lcd.print("PullSpeed");
-//             lcd.setCursor(11, 1);
-//             lcd.print("  ");
-//             lcd.setCursor(12, 1);
-//             lcd.print(speed(), 2);
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setSpeed(speed() + 0.10);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setSpeed(max(speed() - 0.10, 0.1));
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 5) {
-//             drawHome();
-//             if (sensor::offset_mm() >= 0) {
-//                 lcd.setCursor(0, 1);
-//                 lcd.print("Set");
-//                 lcd.setCursor(3, 1);
-//                 lcd.print("Offset");
-//                 lcd.setCursor(11, 1);
-//                 lcd.print("  ");
-//                 lcd.setCursor(12, 1);
-//                 lcd.print(sensor::offset_mm(), 2);
-//             } else if (sensor::offset_mm() < 0) {
-//                 lcd.setCursor(0, 1);
-//                 lcd.print("Set");
-//                 lcd.setCursor(3, 1);
-//                 lcd.print("Offset");
-//                 lcd.setCursor(11, 1);
-//                 lcd.print(sensor::offset_mm(), 2);
-//             }
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 sensor::setOffset(sensor::offset() - 1);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 sensor::setOffset(sensor::offset() + 1);
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 6) {
-//             using namespace stepper::distrib;
-
-//             drawHome();
-//             lcd.setCursor(0, 1);
-//             lcd.print("Set TravInt");
-//             lcd.setCursor(12, 1);
-//             lcd.print(interval());
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setInterval(max(interval() - 100, 0));
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setInterval(interval() + 100);
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 7) {
-//             drawHome();
-//             displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm());
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 stepper::spool::setRpm(stepper::spool::rpm() + 10);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0.1));
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 8) {
-//             drawHome();
-//             displayIntMenuPage(str_fan_speed, 1, fans::speed);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 fans::speed--;
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 fans::speed++;
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 9) {
-//             drawHome();
-//             lcd.setCursor(0, 1);
-//             lcd.print("Total meter:");
-//             lcd.setCursor(13, 1);
-//             lcd.print(stepper::pull::total());
-//         }
-//     }
-
-//     else if (pid::mode() != 3) {
-//         // Preset Mode Setting
-//         // Begin_____________________________________________________________
-//         if (menu_page == 2 && menu_curr_item == 1) {
-//             displayStringMenuPage(mode[pid::mode()]);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setMode(max(pid::mode() - 1, 0));
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
-//             }
-//         }
-//         if (menu_page == 3 && menu_curr_item == 1) {
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set Diameter:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(pid::setpoint_mm(), 2);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setSetpoint(pid::setpoint() - 1);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setSetpoint(pid::setpoint() + 1);
-//             }
-//             eeprom::update();
-//         }
-//         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//         if (menu_page == 4 && menu_curr_item == 1) {
-//             using namespace stepper::distrib;
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set Spool Begin:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(startPos() / steps_per_click);
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setStartPos(startPos() - steps_per_click);
-//                 goToStart();
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setStartPos(startPos() + steps_per_click);
-//                 goToStart();
-//             }
-//         }
-//         //////////////////////////////////////////////////////////////////////////////////////
-//         if (menu_page == 5 && menu_curr_item == 1) {
-//             using namespace stepper::distrib;
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set Spool End:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(endPos() / steps_per_click);
-
-//             using namespace stepper::distrib;
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setEndPos(endPos() - steps_per_click);
-//                 goToEnd();
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setEndPos(endPos() + steps_per_click);
-//                 goToEnd();
-//             }
-//         }
-//         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//         if (menu_page == 6 && menu_curr_item == 1) {
-//             using namespace stepper::pull;
-//             lcd.setCursor(0, 0);
-//             lcd.print("Set PullSpeed:");
-//             lcd.setCursor(0, 1);
-//             lcd.print(speed());
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setSpeed(speed() + 0.10);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setSpeed(max(speed() - 0.10, 0.1));
-//             }
-//         }
-//         // Preset Mode Setting
-//         // End________________________________________________________________
-
-//         if (menu_page == 2 && menu_curr_item == 2) {
-//             drawHome();
-//             lcd.setCursor(0, 1);
-//             lcd.print("Set");
-//             lcd.setCursor(3, 1);
-//             lcd.print("Diameter");
-//             lcd.setCursor(11, 1);
-//             lcd.print("  ");
-//             lcd.setCursor(12, 1);
-//             lcd.print(pid::setpoint_mm(), 2);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setSetpoint(pid::setpoint() - 1);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setSetpoint(pid::setpoint() + 1);
-//             }
-//             eeprom::update();
-//         } else if (menu_page == 2 && menu_curr_item == 3) {
-//             drawHome();
-//             displayString2MenuPage(mode[pid::mode()]);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 pid::setMode(max(pid::mode() - 1, 0));
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 pid::setMode(min(pid::mode() + 1, pid::MAX_MODE));
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 4) {
-//             drawHome();
-//             if (sensor::offset_mm() >= 0) {
-//                 lcd.setCursor(0, 1);
-//                 lcd.print("Set");
-//                 lcd.setCursor(3, 1);
-//                 lcd.print("Offset");
-//                 lcd.setCursor(11, 1);
-//                 lcd.print("  ");
-//                 lcd.setCursor(12, 1);
-//                 lcd.print(sensor::offset_mm(), 2);
-//             } else if (sensor::offset_mm() < 0) {
-//                 lcd.setCursor(0, 1);
-//                 lcd.print("Set");
-//                 lcd.setCursor(3, 1);
-//                 lcd.print("Offset");
-//                 lcd.setCursor(11, 1);
-//                 lcd.print(sensor::offset_mm(), 2);
-//             }
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 sensor::setOffset(sensor::offset() - 1);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 sensor::setOffset(sensor::offset() + 1);
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 5) {
-//             using namespace stepper::distrib;
-//             drawHome();
-//             lcd.setCursor(0, 1);
-//             lcd.print("Set TravInt ");
-//             lcd.setCursor(12, 1);
-//             lcd.print(interval());
-
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 setInterval(max(interval() - 100, 0));
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 setInterval(interval() + 100);
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 6) {
-//             drawHome();
-//             displayIntMenuPage(str_spool_speed, 1, stepper::spool::rpm());
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 stepper::spool::setRpm(stepper::spool::rpm() + 10);
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 stepper::spool::setRpm(max(stepper::spool::rpm() - 10, 0.1));
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 7) {
-//             drawHome();
-//             displayIntMenuPage(str_fan_speed, 1, fans::speed);
-//             if (encoder::up) {
-//                 encoder::up = false;
-//                 fans::speed--;
-//             } else if (encoder::down) {
-//                 encoder::down = false;
-//                 fans::speed++;
-//             }
-//         } else if (menu_page == 2 && menu_curr_item == 8) {
-//             drawHome();
-//             // STATS
-//             lcd.setCursor(0, 1);
-//             lcd.print("Total meter:");
-//             lcd.setCursor(13, 1);
-//             lcd.print(stepper::pull::total());
-//         }
-//     }
-
-//     if (menu_curr_item > 1) {
-//         sensor::update();
-//     }
-// }
-
-// void displayIntMenuPage(String menuItem, int position, int value)
-// {
-
-//     lcd.setCursor(0, position);
-//     lcd.print("Set");
-//     lcd.setCursor(3, position);
-//     lcd.print(menuItem);
-
-//     if (value == 0 && menuItem != 2) {
-//         lcd.setCursor(12, position);
-//         lcd.print("   ");
-//         lcd.setCursor(15, position);
-//     } else if (value > 0 && value < 10 && menuItem != 2) {
-//         lcd.setCursor(12, position);
-//         lcd.print("   ");
-//         lcd.setCursor(15, position);
-//     } else if (value > 9 && value < 100 && menuItem != 2) {
-//         lcd.setCursor(12, position);
-//         lcd.print("  ");
-//         lcd.setCursor(14, position);
-//     } else if (value > 99 && value < 999 && menuItem != 2) {
-//         lcd.setCursor(12, position);
-//         lcd.print(" ");
-//         lcd.setCursor(13, position);
-//     } else if (value > 999 && value < 9999 && menuItem != 2) {
-//         lcd.setCursor(12, position);
-//     }
-//     lcd.print(value);
-// }
-// void displayStringMenuPage(String value)
-// {
-//     lcd.setCursor(0, 0);
-//     lcd.print("Set Mode:");
-//     lcd.setCursor(0, 1);
-//     lcd.print(">");
-//     if (pid::mode() == 0) {
-//         lcd.setCursor(1, 1);
-//         lcd.print("    ");
-//         lcd.setCursor(5, 1);
-//     } else if (pid::mode() == 1) {
-//         lcd.setCursor(1, 1);
-//         lcd.print(" ");
-//         lcd.setCursor(3, 1);
-//     } else if (pid::mode() == 2) {
-//         lcd.setCursor(1, 1);
-//         lcd.print("    ");
-//         lcd.setCursor(5, 1);
-//     } else if (pid::mode() == 3) {
-//         lcd.setCursor(1, 1);
-//         lcd.print(" ");
-//         lcd.setCursor(3, 1);
-//     }
-
-//     lcd.print(value);
-// }
-// void displayString2MenuPage(String value)
-// {
-//     lcd.setCursor(0, 1);
-//     lcd.print("Set");
-//     lcd.setCursor(3, 1);
-//     lcd.print(" Mode");
-
-//     if (pid::mode() == 0) {
-//         lcd.setCursor(8, 1);
-//         lcd.print("    ");
-//         lcd.setCursor(12, 1);
-//     } else if (pid::mode() == 1) {
-//         lcd.setCursor(8, 1);
-//         lcd.print(" ");
-//         lcd.setCursor(10, 1);
-//     } else if (pid::mode() == 2) {
-//         lcd.setCursor(8, 1);
-//         lcd.print("    ");
-//         lcd.setCursor(12, 1);
-//     } else if (pid::mode() == 3) {
-//         lcd.setCursor(8, 1);
-//         lcd.print(" ");
-//         lcd.setCursor(10, 1);
-//     }
-//     lcd.print(value);
-// }
-// void displayIntStringMenuPage(String item, int position, boolean selected, String value)
-// {
-//     lcd.setCursor(0, position);
-//     lcd.print(">");
-//     lcd.setCursor(1, position);
-//     lcd.print(item);
-//     lcd.setCursor(12, position);
-//     lcd.print(value);
-// }
-// void displayMenuItem(String item, int position, boolean selected, int value)
-// {
-//     lcd.setCursor(0, position);
-//     lcd.print(">");
-//     lcd.setCursor(1, position);
-//     lcd.print(item);
-//     if (value == 0 && menu_curr_item != 2 && menu_curr_item != 4) {
-//         lcd.setCursor(11, position);
-//         lcd.print("     ");
-//         lcd.setCursor(15, position);
-//     } else if (value > 0 && value < 10 && menu_curr_item != 2 && menu_curr_item != 4) {
-//         lcd.setCursor(11, position);
-//         lcd.print("     ");
-//         lcd.setCursor(15, position);
-//     } else if (value > 9 && value < 100 && menu_curr_item != 2 && menu_curr_item != 4) {
-//         lcd.setCursor(11, position);
-//         lcd.print("    ");
-//         lcd.setCursor(14, position);
-//     } else if (value > 99 && value < 999 && menu_curr_item != 2 && menu_curr_item != 4) {
-//         lcd.setCursor(11, position);
-//         lcd.print("   ");
-//         lcd.setCursor(13, position);
-//     } else if (value > 999 && value < 9999 && menu_curr_item != 2 && menu_curr_item != 4) {
-//         lcd.setCursor(11, position);
-//         lcd.print("  ");
-//         lcd.setCursor(12, position);
-//     }
-//     lcd.print(value);
-
-//     if (menu_curr_item == 2) {
-//         lcd.setCursor(11, position);
-//         lcd.print("  ");
-//         lcd.setCursor(12, position);
-//         lcd.print(pid::setpoint_mm(), 2);
-//     }
-
-//     if (menu_curr_item == 4) {
-//         if (sensor::offset_mm() >= 0) {
-//             lcd.setCursor(11, position);
-//             lcd.print("+");
-//             lcd.setCursor(12, position);
-//             lcd.print(sensor::offset_mm(), 2);
-//         } else if (sensor::offset_mm() < 0) {
-//             lcd.setCursor(11, position);
-//             lcd.print(sensor::offset_mm(), 2);
-//         }
-//     }
 // }
