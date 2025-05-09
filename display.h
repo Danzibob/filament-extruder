@@ -15,7 +15,7 @@
 namespace display {
 
 // Interval display is refreshed at
-unsigned long interval = 100;
+unsigned long interval = 500;
 
 constexpr int STEPS_PER_CLICK = 100;
 constexpr int MM_PER_CLICK = 10; // in 1/100ths of mm

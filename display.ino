@@ -196,7 +196,7 @@ void redrawMenu()
 
         redrawMenuScreen(
             strings::pull_speed, strings::set_pull_speed,
-            [](int adj) { pull::setInterval(clamp(10, pull::interval() + adj, 1000)); },
+            [](int adj) { pull::setInterval(clamp(1, pull::interval() + adj, 1000)); },
             []() { return String(pull::interval()); },
             pid::mode() != pid::PIDMode::Manual);
     } else if (currScreen == Screen::DistribSpeed) {
