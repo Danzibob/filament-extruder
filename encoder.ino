@@ -15,7 +15,10 @@ namespace encoder {
 void init()
 {
     last = 0;
-    inner_encoder = new ClickEncoder(A2, A1, A3);
+    pinMode(A3, OUTPUT);
+    digitalWrite(A3, HIGH);
+    inner_encoder = new ClickEncoder(A0, A1, A2);
+
     Timer1.initialize(1000);
     Timer1.attachInterrupt(interrupt);
 }
