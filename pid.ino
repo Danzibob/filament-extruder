@@ -42,7 +42,7 @@ void loop()
     }
 
     // set output limits
-    inner_pid.SetOutputLimits(1, 100);
+    inner_pid.SetOutputLimits(1, 128);
 
     // get tuning parameters to use
     PIDDetails* mode_tuning;

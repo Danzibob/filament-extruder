@@ -29,28 +29,36 @@ namespace stepper {
 
 namespace pull {
 
-int step = HIGH;
-unsigned long previous_millis = 0;
-unsigned long curr_interval = 9000;
+unsigned long last_millis = 0;
 
 const int STEPS_PER_REV = 400;
 const int MM_PER_REV = 94; // diam = 30mm
 
 int step_in_rev = 0;
 int num_revs = 0;
+unsigned long curr_interval = 0;
 
 void tick()
 {
-    digitalWrite(PIN_PULLER_DIR, HIGH);
-    stepperTick(PIN_PULLER_STEP, &step, &previous_millis, curr_interval, &step_in_rev);
-    if (step_in_rev == STEPS_PER_REV) {
-        step_in_rev = 0;
+    // hardware pwm: no need to do anything so just update step count
+    if (last_millis == 0 || interval == 0) {
+        last_millis = millis();
+        return;
+    }
+    step_in_rev += (millis() - last_millis) / interval();
+    while (step_in_rev >= STEPS_PER_REV) {
+        step_in_rev = step_in_rev - STEPS_PER_REV;
         num_revs++;
     }
 }
 
 unsigned long interval() { return curr_interval; }
-void setInterval(unsigned long interval) { curr_interval = interval; }
+void setInterval(unsigned long interval) {
+    digitalWrite(PIN_PULLER_DIR, HIGH);
+    curr_interval = interval;
+    OCR0A = clamp(2, interval * 2, 255);
+    OCR0B = clamp(2, interval, 255);
+}
 
 // mm / sec
 float speed()
@@ -92,7 +100,7 @@ unsigned long curr_interval = 0;
 
 void tick()
 {
-    digitalWrite(PIN_SPOOL_DIR, LOW);
+    digitalWrite(PIN_SPOOL_DIR, HIGH);
     stepperTick(PIN_SPOOL_STEP, &step, &previous_millis, curr_interval);
 }
 
@@ -173,6 +181,7 @@ void goToPos(int new_pos)
     if (curr_pos == new_pos)
         return;
 
+    bool wasEnabled = isEnabled();
     dir = new_pos > curr_pos ? HIGH : LOW;
     digitalWrite(PIN_DISTRIB_DIR, dir);
     digitalWrite(PIN_STEPPER_ENABLE, LOW);
@@ -183,6 +192,8 @@ void goToPos(int new_pos)
         delay(1);
         curr_pos += dir ? 1 : -1;
     }
+    if (!wasEnabled)
+        disable();
 }
 
 void goToStart() { goToPos(pos_start); }
@@ -208,6 +219,12 @@ void init()
     spool::setInterval(100);
     distrib::setInterval(100);
     distrib::reset();
+
+    disable();
+
+    // PWM frequency of 976.56 Hz, counting to OCR0A and turning off at OCR0B for puller_step
+    TCCR0A = _BV(COM2A0) | _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);
+    TCCR0B = _BV(WGM22) | B00000011;
 }
 
 boolean isEnabled()
