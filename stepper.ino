@@ -120,18 +120,27 @@ void setRpm(float rpm)
 
 namespace distrib {
 
-int step = LOW;
 int dir = LOW;
-
-unsigned long previous_millis = 0;
-unsigned long curr_interval = 0;
 
 int curr_pos = 0; // in steps in HIGH direction
 int pos_start = 0;
 int pos_end = MAX_POS;
 
+unsigned long last_millis = 0;
+
 void tick()
 {
+    // the alt tick of the hardware pwm: no need to do anything so just update step count
+    if (last_millis == 0 || interval == 0) {
+        last_millis = millis();
+        return;
+    }
+    int num_steps = (millis() - last_millis) / pull::interval();
+    curr_pos = clamp(0, curr_pos + (dir == HIGH ? num_steps : -num_steps), MAX_POS);
+    while (step_in_rev >= STEPS_PER_REV) {
+        step_in_rev = step_in_rev - STEPS_PER_REV;
+        num_revs++;
+    }
     if (curr_pos >= pos_end) {
         dir = LOW;
     } else if (curr_pos <= pos_start) {
@@ -140,7 +149,7 @@ void tick()
     digitalWrite(PIN_DISTRIB_DIR, dir);
 
     if (stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, curr_interval) && step == LOW)
-        curr_pos = clamp(0, curr_pos + (dir == HIGH ? 1 : -1), MAX_POS);
+
 }
 
 void reset()
