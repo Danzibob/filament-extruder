@@ -122,11 +122,12 @@ namespace distrib {
 
 int dir = LOW;
 
-int curr_pos = 0; // in steps in HIGH direction
-int pos_start = 0;
-int pos_end = MAX_POS;
+unsigned long curr_pos = 0; // in steps in HIGH direction
+unsigned long pos_start = 0;
+unsigned long pos_end = MAX_POS;
 
 unsigned long last_millis = 0;
+unsigned long millis_since_last_step = 0;
 
 void tick()
 {
@@ -154,13 +155,12 @@ void reset()
 {
     dir = LOW;
     digitalWrite(PIN_DISTRIB_DIR, dir);
+    OCR0A = 24;
+    OCR0B = 12;
+
     digitalWrite(PIN_STEPPER_ENABLE, LOW);
-    for (int x = 0; x < MAX_POS; x++) {
-        digitalWrite(PIN_DISTRIB_STEP, HIGH);
-        delay(1);
-        digitalWrite(PIN_DISTRIB_STEP, LOW);
-        delay(1);
-    }
+    delay(1500);
+    digitalWrite(PIN_STEPPER_ENABLE, HIGH);
 
     // it would be nice to try detect stalls here or something, but not sure if its possible
     curr_pos = 0;
@@ -168,21 +168,21 @@ void reset()
 
 unsigned long interval() { return pull::interval(); }
 
-int pos() { return curr_pos; }
+unsigned long pos() { return curr_pos; }
 
-int startPos() { return pos_start; }
-void setStartPos(int startPos)
+unsigned long startPos() { return pos_start; }
+void setStartPos(unsigned long startPos)
 {
     pos_start = startPos;
 }
 
-int endPos() { return pos_end; }
-void setEndPos(int endPos)
+unsigned long endPos() { return pos_end; }
+void setEndPos(unsigned long endPos)
 {
     pos_end = endPos;
 }
 
-void goToPos(int new_pos)
+void goToPos(unsigned long new_pos)
 {
     if (curr_pos == new_pos)
         return;
@@ -195,15 +195,19 @@ void goToPos(int new_pos)
         digitalWrite(PIN_DISTRIB_STEP, HIGH);
         delay(1);
         digitalWrite(PIN_DISTRIB_STEP, LOW);
-        delay(1);
         curr_pos += dir ? 1 : -1;
     }
     if (!wasEnabled)
         disable();
 }
 
-void goToStart() { goToPos(pos_start); }
-void goToEnd() { goToPos(pos_end); }
+// TODO: make these do things again
+void goToStart() {
+    goToPos(pos_start);
+}
+void goToEnd() {
+    goToPos(pos_end);
+}
 
 }
 
@@ -220,16 +224,15 @@ void init()
 
     pinMode(PIN_STEPPER_ENABLE, OUTPUT);
 
-    // TODO: find better default values probably
-    pull::setInterval(100);
-    spool::setInterval(100);
+    // PWM frequency of 976.56 Hz, counting to OCR0A and turning off at OCR0B for puller_step
+    TCCR0A = _BV(COM0A0) | _BV(COM0B1) | _BV(WGM01) | _BV(WGM00);
+    TCCR0B = _BV(WGM02) | B00000011;
+
     distrib::reset();
+    pull::setInterval(100);
+    spool::setInterval(50);
 
     disable();
-
-    // PWM frequency of 976.56 Hz, counting to OCR0A and turning off at OCR0B for puller_step
-    TCCR0A = _BV(COM2A0) | _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);
-    TCCR0B = _BV(WGM22) | B00000011;
 }
 
 boolean isEnabled()

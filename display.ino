@@ -115,7 +115,7 @@ void redrawSetup()
 
         redrawSetupScreen(
             strings::setup_distrib_start,
-            [](int adj) { distrib::setStartPos(clamp(0, distrib::startPos() + (adj * STEPS_PER_CLICK), distrib::MAX_POS)); distrib::goToStart(); },
+            [](int adj) { distrib::setStartPos(clamp(0, adj > 0 ? distrib::startPos() + STEPS_PER_CLICK : distrib::startPos() - STEPS_PER_CLICK, distrib::MAX_POS)); distrib::goToStart(); },
             []() { return String(distrib::startPos()); });
     } else if (currScreen == Screen::SetupSpoolEnd) {
         using namespace stepper;
@@ -127,7 +127,7 @@ void redrawSetup()
 
         redrawSetupScreen(
             strings::setup_distrib_end,
-            [](int adj) { distrib::setEndPos(clamp(distrib::startPos(), distrib::endPos() + (adj * STEPS_PER_CLICK), distrib::MAX_POS)); distrib::goToEnd(); },
+            [](int adj) { distrib::setEndPos(clamp(distrib::startPos(), adj > 0 ? distrib::endPos() + STEPS_PER_CLICK : distrib::endPos() - STEPS_PER_CLICK, distrib::MAX_POS)); distrib::goToEnd(); },
             []() { return String(distrib::endPos()); });
     } else if (currScreen > Screen::SetupSpoolEnd) {
         inSetup = false;

@@ -47,7 +47,7 @@ void setRpm(float rpm);
 
 namespace distrib {
 
-const int MAX_POS = 1900;
+const unsigned long MAX_POS = (unsigned long)(1900) * (unsigned long)(32);
 
 void tick();
 void reset();
@@ -55,16 +55,15 @@ void reset();
 unsigned long interval();
 void setInterval(unsigned long interval);
 
-int pos();
-
-int startPos();
-void setStartPos(int startPos);
-
-int endPos();
-void setEndPos(int endPos);
-
 void goToStart();
 void goToEnd();
+unsigned long pos();
+
+unsigned long startPos();
+void setStartPos(unsigned long startPos);
+
+unsigned long endPos();
+void setEndPos(unsigned long endPos);
 
 }
 
