@@ -57,7 +57,7 @@ void setInterval(unsigned long interval) {
     digitalWrite(PIN_PULLER_DIR, HIGH);
     curr_interval = interval;
     OCR0A = clamp(2, interval * 2, 255);
-    OCR0B = clamp(2, interval, 255);
+    OCR0B = clamp(1, interval, 128);
 }
 
 // mm / sec
