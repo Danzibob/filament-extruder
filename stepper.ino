@@ -137,8 +137,10 @@ void tick()
         millis_since_last_step += new_millis - last_millis;
     last_millis = new_millis;
 
-    unsigned long step_interval = max(1, (pull::interval()));
+    unsigned long step_interval = max(1, (pull::interval() / 16));
     while (millis_since_last_step >= step_interval) {
+        if (curr_pos == 0)
+            break;
         curr_pos = clamp(0, curr_pos + (dir == HIGH ? 1 : -1), MAX_POS);
         millis_since_last_step -= step_interval;
     }
@@ -250,6 +252,7 @@ void disable()
 {
     enabled = false;
     digitalWrite(PIN_STEPPER_ENABLE, HIGH);
+    distrib::last_millis = 0;
 }
 
 }
