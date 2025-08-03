@@ -7,6 +7,9 @@
 
 void setup()
 {
+    Serial.begin(9600);
+    Serial.println("Hello.");
+
     display::init();
     display::showSplash();
 
@@ -17,6 +20,7 @@ void setup()
 
     display::clear();
     display::loop(true);
+    Serial.println("Init done");
 }
 
 void loop()
