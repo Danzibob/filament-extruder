@@ -20,7 +20,6 @@ enum class Screen {
     Mode,
     WidthOffset,
     PullSpeed,
-    DistribSpeed,
     SpoolSpeed
 };
 Screen currScreen = Screen::SetupMode;
@@ -199,13 +198,6 @@ void redrawMenu()
             [](int adj) { pull::setInterval(clamp(1, pull::interval() + adj, 128)); },
             []() { return String(pull::interval()); },
             pid::mode() != pid::PIDMode::Manual);
-    } else if (currScreen == Screen::DistribSpeed) {
-        using namespace stepper;
-
-        redrawMenuScreen(
-            strings::distrib_speed, strings::set_distrib_speed,
-            [](int adj) { distrib::setInterval(clamp(10, distrib::interval() + adj, 1000)); },
-            []() { return String(distrib::interval()); });
     } else if (currScreen == Screen::SpoolSpeed) {
         using namespace stepper;
 

@@ -41,7 +41,7 @@ unsigned long curr_interval = 0;
 void tick()
 {
     // hardware pwm: no need to do anything so just update step count
-    if (last_millis == 0 || interval == 0) {
+    if (last_millis == 0 || curr_interval == 0) {
         last_millis = millis();
         return;
     }
@@ -131,25 +131,23 @@ unsigned long last_millis = 0;
 void tick()
 {
     // the alt tick of the hardware pwm: no need to do anything so just update step count
-    if (last_millis == 0 || interval == 0) {
-        last_millis = millis();
-        return;
+    unsigned long new_millis = millis();
+    if (last_millis != 0)
+        millis_since_last_step += new_millis - last_millis;
+    last_millis = new_millis;
+
+    unsigned long step_interval = max(1, (pull::interval()));
+    while (millis_since_last_step >= step_interval) {
+        curr_pos = clamp(0, curr_pos + (dir == HIGH ? 1 : -1), MAX_POS);
+        millis_since_last_step -= step_interval;
     }
-    int num_steps = (millis() - last_millis) / pull::interval();
-    curr_pos = clamp(0, curr_pos + (dir == HIGH ? num_steps : -num_steps), MAX_POS);
-    while (step_in_rev >= STEPS_PER_REV) {
-        step_in_rev = step_in_rev - STEPS_PER_REV;
-        num_revs++;
-    }
+
     if (curr_pos >= pos_end) {
         dir = LOW;
     } else if (curr_pos <= pos_start) {
         dir = HIGH;
     }
     digitalWrite(PIN_DISTRIB_DIR, dir);
-
-    if (stepperTick(PIN_DISTRIB_STEP, &step, &previous_millis, curr_interval) && step == LOW)
-
 }
 
 void reset()
@@ -168,8 +166,7 @@ void reset()
     curr_pos = 0;
 }
 
-unsigned long interval() { return curr_interval; }
-void setInterval(unsigned long interval) { curr_interval = interval; }
+unsigned long interval() { return pull::interval(); }
 
 int pos() { return curr_pos; }
 
@@ -226,7 +223,6 @@ void init()
     // TODO: find better default values probably
     pull::setInterval(100);
     spool::setInterval(100);
-    distrib::setInterval(100);
     distrib::reset();
 
     disable();
