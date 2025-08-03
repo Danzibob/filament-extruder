@@ -100,7 +100,7 @@ unsigned long curr_interval = 0;
 
 void tick()
 {
-    digitalWrite(PIN_SPOOL_DIR, HIGH);
+    digitalWrite(PIN_SPOOL_DIR, LOW);
     stepperTick(PIN_SPOOL_STEP, &step, &previous_millis, curr_interval);
 }
 
