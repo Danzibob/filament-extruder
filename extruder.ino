@@ -29,6 +29,10 @@ void loop()
     display::loop(mustUpdate);
     if (stepper::isEnabled()) {
         pid::loop();
+
+        if (sensor::width() - sensor::offset() <= 0.10) {
+            stepper::disable();
+        }
     } else if (!display::isInSetup() && sensor::width() - sensor::offset() >= 0.10) {
         stepper::enable();
     }
