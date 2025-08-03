@@ -6,8 +6,6 @@
 namespace pid {
 
 enum PIDMode {
-    Soft = 0,
-    Medium,
     Hard,
     Manual
 };

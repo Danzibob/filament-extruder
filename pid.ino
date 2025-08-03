@@ -16,14 +16,12 @@ struct PIDDetails {
 
 namespace modes {
 
-PIDDetails soft = { 6.9, 0.23, 5.175 };
-PIDDetails medium = { 10.8, 0.45, 6.48 };
 PIDDetails hard = { 15.48, 0.62, 9.675 };
 PIDDetails hard2 = { 0.1548, 0.0062, 0.9675 };
 
 }
 
-PID inner_pid(&input, &output, &curr_setpoint, modes::soft.kp, modes::soft.kp, modes::soft.kd, DIRECT);
+PID inner_pid(&input, &output, &curr_setpoint, modes::hard.kp, modes::hard.ki, modes::hard.kd, DIRECT);
 
 }
 
@@ -42,19 +40,11 @@ void loop()
     }
 
     // set output limits
-    inner_pid.SetOutputLimits(1, 128);
+    inner_pid.SetOutputLimits(12, 128);
 
     // get tuning parameters to use
     PIDDetails* mode_tuning;
     switch (curr_mode) {
-    case Soft:
-        mode_tuning = &modes::soft;
-        break;
-
-    case Medium:
-        mode_tuning = &modes::medium;
-        break;
-
     case Hard: {
         double gap = abs(curr_setpoint - input); // distance away from setpoint
         if (gap >= 0.06)
@@ -66,8 +56,8 @@ void loop()
 
     case Manual: // unreachable
     default:
-        setMode(Soft);
-        mode_tuning = &modes::soft;
+        setMode(Hard);
+        mode_tuning = &modes::hard;
     };
 
     // get pid output
@@ -95,6 +85,6 @@ PIDMode mode() { return curr_mode; };
 void setMode(PIDMode mode)
 {
     curr_mode = mode;
-    // TODO: set tunings here?
 };
+
 }

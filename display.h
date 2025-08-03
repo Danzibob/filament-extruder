@@ -45,7 +45,7 @@ String stats             = "Pulled: ";
 // clang-format on
 
 // Must line up with PIDMode
-String modes[4] = { "Soft", "Medium", "Hard", "Manual" };
+String modes[4] = { "PLA/PETG", "Manual" };
 
 }
 
