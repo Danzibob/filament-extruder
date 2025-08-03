@@ -16,3 +16,6 @@ build:
 
 flash:
 	arduino-cli compile -p /dev/ttyUSB* --upload --fqbn arduino:avr:nano:cpu=atmega328old .
+
+monitor:
+	arduino-cli monitor -p /dev/ttyUSB* --fqbn arduino:avr:nano:cpu=atmega328old
