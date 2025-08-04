@@ -226,9 +226,9 @@ void init()
 
     pinMode(PIN_STEPPER_ENABLE, OUTPUT);
 
-    // PWM frequency of 976.56 Hz, counting to OCR0A and turning off at OCR0B for puller_step
+    // PWM frequency of clk/256, counting to OCR0A and turning off at OCR0B for puller_step
     TCCR0A = _BV(COM0A0) | _BV(COM0B1) | _BV(WGM01) | _BV(WGM00);
-    TCCR0B = _BV(WGM02) | B00000011;
+    TCCR0B = _BV(WGM02) | B00000101;
 
     distrib::reset();
     pull::setInterval(100);
