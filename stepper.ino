@@ -205,10 +205,10 @@ void goToPos(unsigned long new_pos)
 
 // TODO: make these do things again
 void goToStart() {
-    goToPos(pos_start);
+    // goToPos(pos_start);
 }
 void goToEnd() {
-    goToPos(pos_end);
+    // goToPos(pos_end);
 }
 
 }
