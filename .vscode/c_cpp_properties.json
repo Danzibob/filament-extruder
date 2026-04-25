@@ -14,6 +14,9 @@
       "compilerPath": "${env:HOME}/.arduino15/packages/arduino/tools/avr-gcc/7.3.0-atmel3.6.1-arduino7/bin/avr-g++",
       "cStandard": "gnu11",
       "cppStandard": "gnu++17",
+      "forcedInclude": [
+        "${env:HOME}/.arduino15/internal/arduino_avr_1.8.6_78e0815c6047bc54/cores/arduino/Arduino.h"
+      ],
       "intelliSenseMode": "gcc-x64"
     }
   ],
