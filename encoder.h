@@ -1,14 +1,10 @@
 #pragma once
 
 #include "stepper.h"
-#include <ClickEncoder.h>
-#include <TimerOne.h> // trigger timer to read encoder
+#include <RotaryEncoder.h>
 
 namespace encoder {
 
-int16_t last, val;
-
-ClickEncoder::Button btn;
 boolean up, down, clicked = false;
 
 void init();
