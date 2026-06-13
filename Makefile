@@ -16,4 +16,4 @@ flash:
 	arduino-cli compile -p /dev/ttyUSB* --upload --profile default .
 
 monitor:
-	arduino-cli monitor -p /dev/ttyUSB* --fqbn arduino:avr:nano:cpu=atmega328old
+	arduino-cli monitor -p /dev/ttyUSB* --fqbn arduino:avr:nano:cpu=atmega328old --config 115200

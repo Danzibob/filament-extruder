@@ -176,8 +176,8 @@ void redrawMenu()
     if (currScreen == Screen::Stats) {
         redrawMenuScreen(
             strings::stats, strings::stats,
-            [](int) {},
-            []() { return String(stepper::pull::total(), 2); },
+            [](int) { },
+            []() -> String { return String(stepper::pull::total() / 1000.0, 2) + "m"; },
             true);
     } else if (currScreen == Screen::Mode) {
         redrawMenuScreen(
@@ -195,16 +195,16 @@ void redrawMenu()
 
         redrawMenuScreen(
             strings::pull_speed, strings::set_pull_speed,
-            [](int adj) { pull::setInterval(clamp(12, pull::interval() + adj, 128)); },
-            []() { return String(pull::interval()); },
+            [](int adj) { pull::setSpeed(max(1.0f, pull::speed() + float(adj))); },
+            []() -> String { return String(pull::speed(), 1) + "mm/s"; },
             pid::mode() != pid::PIDMode::Manual);
     } else if (currScreen == Screen::SpoolSpeed) {
         using namespace stepper;
 
         redrawMenuScreen(
             strings::spool_speed, strings::set_spool_speed,
-            [](int adj) { spool::setInterval(clamp(10, spool::interval() + adj, 1000)); },
-            []() { return String(spool::interval()); });
+            [](int adj) { spool::setRpm(max(1.0f, spool::rpm() + float(adj))); },
+            []() -> String { return String(spool::rpm(), 1) + "rpm"; });
     }
 }
 
@@ -214,7 +214,8 @@ namespace display {
 
 void init()
 {
-    lcd.begin(16, 2);
+    lcd.init();
+    lcd.backlight();
     lcd.createChar(char(Logo::Diameter), logos::diameter);
     lcd.createChar(char(Logo::Speed), logos::speed);
     lcd.createChar(char(Logo::MM), logos::mm);
@@ -244,14 +245,27 @@ void loop(boolean receivedInput)
     if (!receivedInput && currentMillis - lastUpdate < interval)
         return;
 
-    // TODO: Hold to reset
+    if (encoder::held) {
+        encoder::held = false;
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("Resetting...");
+        stepper::distrib::reset();
+        inSetup = false;
+        currScreen = Screen::Stats;
+        adjusting = false;
+        lcd.clear();
+        redrawStatus();
+        redrawMenu();
+        lastUpdate = millis();
+        return;
+    }
 
     if (inSetup) {
         redrawSetup();
     } else {
         redrawStatus();
-        if (receivedInput)
-            redrawMenu();
+        redrawMenu();
     }
 
     lastUpdate = currentMillis;
@@ -263,31 +277,3 @@ boolean isInSetup()
 }
 
 }
-
-// switch (encoder::btn) {
-// case ClickEncoder::Clicked:
-//     lcd.clear();
-//     break;
-// case ClickEncoder::Held:
-//     lcd.clear();
-//     lcd.setCursor(0, 0);
-//     lcd.print("Resetting...");
-//     stepper::distrib::reset();
-//     menu_curr_item = 1;
-//     menu_page = 2;
-//     lcd.clear();
-//     break;
-// case ClickEncoder::DoubleClicked:
-//     if (pid::mode < 3) {
-//         if (menu_page == 2 && menu_curr_item == 8) {
-//             stepper::pull::resetCounter();
-//         }
-//     } else if (pid::mode == 3) {
-//         if (menu_page == 2 && menu_curr_item == 9) {
-//             stepper::pull::resetCounter();
-//         }
-//     }
-//     break;
-// default:
-//     break;
-// }

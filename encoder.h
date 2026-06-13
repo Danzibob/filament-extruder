@@ -5,7 +5,7 @@
 
 namespace encoder {
 
-boolean up, down, clicked = false;
+boolean up, down, clicked, held = false;
 
 void init();
 

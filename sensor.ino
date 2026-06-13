@@ -1,3 +1,4 @@
+#include "./eeprom.h"
 #include "./sensor.h"
 
 namespace {
@@ -12,9 +13,9 @@ static float lut[lut_len][2] = {
     { 160, 1.99 }, { 200, 2.48 }, { 240, 3.00 }, { 248, 3.10 }, { 256, 3.20 }, { 280, 3.50 }, { 345, 4.00 }, { 360, 4.15 }
 };
 
-float inp = lut[0][0]; // ADC input
-float inp_raw = 0; // before smoothing
-float inp_min = 0; // zero point observed at startup
+float inp = 0;
+float inp_raw = 0;
+float inp_baseline = 0; // no-filament ADC ceiling; sensor is inverted (higher ADC = no filament)
 
 float lookup(float inval)
 {
@@ -38,12 +39,16 @@ void init()
 {
     pinMode(PIN_SENSOR_IN, INPUT);
 
-    // take a second to calibrate
-    // this assumes the sensor is empty on boot
-    while (millis() < 1000) {
+    // Sample for 500 ms with no filament present to establish the baseline.
+    // The sensor is inverted: output is highest with no filament and drops as
+    // diameter increases. We capture the maximum (ceiling) so that subtracting
+    // inp_raw from it gives ~0 when empty, preventing false non-zero readings.
+    // Uses relative time so it works regardless of how long earlier init steps took.
+    unsigned long end = millis() + 500;
+    while (millis() < end) {
         inp_raw = analogRead(PIN_SENSOR_IN);
-        if (inp_raw > inp_min) {
-            inp_min = inp_raw;
+        if (inp_raw > inp_baseline) {
+            inp_baseline = inp_raw;
         }
     }
 }
@@ -51,8 +56,13 @@ void init()
 void loop()
 {
     inp_raw = analogRead(PIN_SENSOR_IN);
-    inp += (inp_raw - inp) - inp_min; // smoothing
-    curr_width = abs(lookup(inp)) + offset_mm();
+    // Shift the raw reading down by the calibrated zero-point baseline so that
+    // inp represents signal above the empty-sensor floor. (Not a smoothing filter
+    // — alpha=1 means inp tracks inp_raw directly, offset by inp_min.)
+    // Sensor output decreases as filament diameter increases, so invert relative
+    // to the no-filament baseline to get a signal that rises with diameter.
+    inp = inp_baseline - inp_raw;
+    curr_width = lookup(inp) + offset_mm();
 }
 
 float width() { return curr_width; }

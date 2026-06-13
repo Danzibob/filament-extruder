@@ -1,4 +1,5 @@
 #include "./pid.h"
+#include "./sensor.h"
 
 namespace {
 
@@ -17,7 +18,7 @@ struct PIDDetails {
 namespace modes {
 
 PIDDetails hard = { 15.48, 0.62, 9.675 };
-PIDDetails hard2 = { 0.1548, 0.0062, 0.9675 };
+PIDDetails hard2 = { 0.1548, 0.0062, 0.9675 }; // exactly 1/100th of hard — same shape, far less aggressive
 
 }
 
@@ -31,7 +32,7 @@ void loop()
 {
     input = sensor::width();
 
-    if (curr_mode == Manual) { // manual mode
+    if (curr_mode == Manual) {
         inner_pid.SetMode(MANUAL);
         stepper::pull::tick();
         stepper::distrib::tick();
@@ -39,14 +40,15 @@ void loop()
         return;
     }
 
-    // set output limits
+    // Limits map to the OCR0A range: interval=12 → OCR0A=24 (fast), interval=128 → OCR0A=255 (slow).
     inner_pid.SetOutputLimits(12, 128);
 
-    // get tuning parameters to use
     PIDDetails* mode_tuning;
     switch (curr_mode) {
     case Hard: {
-        double gap = abs(curr_setpoint - input); // distance away from setpoint
+        double gap = (curr_setpoint - input);
+        // Switch to fine tuning when close to target to avoid overshoot;
+        // 0.06 mm is empirically chosen as the crossover point.
         if (gap >= 0.06)
             mode_tuning = &modes::hard;
         else
@@ -60,14 +62,12 @@ void loop()
         mode_tuning = &modes::hard;
     };
 
-    // get pid output
     inner_pid.SetTunings(mode_tuning->kp, mode_tuning->ki, mode_tuning->kd);
     inner_pid.SetMode(AUTOMATIC);
     inner_pid.Compute();
     last_output = output;
     stepper::pull::setInterval(output);
 
-    // do the thing
     stepper::pull::tick();
     stepper::distrib::tick();
     stepper::spool::tick();

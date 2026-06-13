@@ -3,7 +3,12 @@
 namespace eeprom {
 void load()
 {
-    sensor::setOffset(EEPROM.read(addr_offset));
+    int8_t stored_offset = (int8_t)EEPROM.read(addr_offset);
+    // Treat ±25 boundary values as corrupt (old code clamped 0xFF→25 on first boot).
+    if (stored_offset > -25 && stored_offset < 25)
+        sensor::setOffset(stored_offset);
+    else
+        sensor::setOffset(0);
 
     // EEPROM
     int setpoint_int = (EEPROM.read(addr_setpoint) * 256) + EEPROM.read(addr_setpoint + 1);
